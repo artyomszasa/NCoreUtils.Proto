@@ -1,0 +1,6 @@
+.vs
+.vscode
+.ionide
+
+NCoreUtils*/obj
+NCoreUtils*/bin
