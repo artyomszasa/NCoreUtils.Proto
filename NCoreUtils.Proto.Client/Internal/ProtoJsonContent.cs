@@ -1,6 +1,7 @@
 using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 using System.Threading.Tasks;
@@ -15,6 +16,8 @@ public static class ProtoJsonContent
 
 public class ProtoJsonContent<T> : HttpContent
 {
+    private static MediaTypeHeaderValue? Utf8JsonMediaType { get; set; }
+
     public JsonTypeInfo<T> TypeInfo { get; }
 
     public T Value { get; }
@@ -23,6 +26,7 @@ public class ProtoJsonContent<T> : HttpContent
     {
         TypeInfo = typeInfo;
         Value = value;
+        Headers.ContentType = Utf8JsonMediaType ??= new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
     }
 
     protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)

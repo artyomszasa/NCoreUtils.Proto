@@ -118,7 +118,7 @@ internal class ProtoInfoParser : ProtoParser
                     output: output,
                     error: opts?.Error ?? match.Error,
                     parameterNaming: parameterNaming,
-                    inputDtoTypeName: TypeName.Create($"Dto{serviceId}{methodId}Args")
+                    inputDtoTypeName: TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args")
                 );
             })
             .ToList();

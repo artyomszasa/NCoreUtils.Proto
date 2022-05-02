@@ -5,10 +5,10 @@ using Xunit;
 
 namespace NCoreUtils.Proto.Unit;
 
-public class BasicTests : BasicTestsBase<MathStartup>
+public class QBasicTests : BasicTestsBase<QMathStartup>
 {
-    public BasicTests()
-        : base(services => services.AddMathClient("http://localhost"))
+    public QBasicTests()
+        : base(services => services.AddQMathClient("http://localhost"))
     { }
 
     [Fact]

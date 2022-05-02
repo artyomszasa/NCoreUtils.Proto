@@ -5,10 +5,10 @@ using Xunit;
 
 namespace NCoreUtils.Proto.Unit;
 
-public class BasicTests : BasicTestsBase<MathStartup>
+public class FBasicTests : BasicTestsBase<FMathStartup>
 {
-    public BasicTests()
-        : base(services => services.AddMathClient("http://localhost"))
+    public FBasicTests()
+        : base(services => services.AddFMathClient("http://localhost"))
     { }
 
     [Fact]

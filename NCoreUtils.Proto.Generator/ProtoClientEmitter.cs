@@ -30,7 +30,7 @@ internal class ProtoClientEmitter
 
         static string EmitAdd(ParameterDescriptor p)
             => p.Type.IsValueType
-                ? $@"if (default == {p.Name})
+                ? $@"if (default != {p.Name})
         {{
             data.Add(""{p.Key}"", StringifyArgument({p.Name}));
         }}"
@@ -45,8 +45,10 @@ internal class ProtoClientEmitter
             ? @$"protected virtual global::System.Net.Http.HttpRequestMessage Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         var path = GetCachedMethodPath(Methods.{desc.MethodId})
-            {string.Join(" + ", desc.Parameters.Select((e, i) => (i == 0 ? '?' : '&') + $"$\"{e.Key}={{global::System.Uri.EscapeDataString({e.Name})}}\""))};
+            {(desc.Parameters.Count == 0 ? string.Empty : "+ ")}{string.Join(Environment.NewLine + "            + ", desc.Parameters.Select((e, i) => $"$\"{(i == 0 ? '?' : '&')}{e.Key}={{Escape(StringifyArgument({e.Name}))}}\""))};
         return new global::System.Net.Http.HttpRequestMessage(global::System.Net.Http.HttpMethod.{desc.Verb}, path);
+
+        static string Escape(string? value) => global::System.Uri.EscapeDataString(value ?? string.Empty);
     }}"     : @$"protected virtual global::System.Net.Http.HttpRequestMessage Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         return new global::System.Net.Http.HttpRequestMessage(global::System.Net.Http.HttpMethod.{desc.Verb}, GetCachedMethodPath(Methods.{desc.MethodId}))

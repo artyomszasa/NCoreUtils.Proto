@@ -4,14 +4,14 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace NCoreUtils.Proto.Unit;
 
-public class MathStartup
+public class FMathStartup
 {
     [SuppressMessage("Style", "CA1822")]
     public void ConfigureServices(IServiceCollection services)
     {
         services
             .AddLogging()
-            .AddSingleton<IMath, MathService>();
+            .AddSingleton<IMath, FMathService>();
     }
 
     [SuppressMessage("Style", "CA1822")]
@@ -21,7 +21,7 @@ public class MathStartup
             .UseRouting()
             .UseEndpoints(endpoints =>
             {
-                endpoints.MapMathService();
+                endpoints.MapFMathService();
             });
     }
 }

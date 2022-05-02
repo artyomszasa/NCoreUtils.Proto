@@ -46,8 +46,8 @@ internal class ProtoInfoEmitter
 }};";
     }
 
-    private string EmitRootSerializationClass()
-        => @$"public class JsonRoot{Info.Target.Name}
+    private string EmitRootSerializationClass(string name)
+        => @$"public class JsonRoot{name}
 {{
     {string.Join(Environment.NewLine + "    ", Info.Methods.Where(m => m.Input == ProtoInputType.Json).Select(m => $"public {m.InputDtoTypeName} {m.MethodId}Args {{ get; set; }} = default!;"))}
 
@@ -66,7 +66,7 @@ public partial class {name} : global::NCoreUtils.Proto.Internal.ProtoServiceInfo
     public const string Path = ""{Info.Path}"";
 }}
 {string.Join(Environment.NewLine, Info.Methods.Select(EmitInputDto))}
-{EmitRootSerializationClass()}
+{EmitRootSerializationClass(name)}
 }}";
     }
 }
