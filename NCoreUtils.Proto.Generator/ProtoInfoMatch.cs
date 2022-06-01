@@ -22,6 +22,8 @@ public class ProtoInfoMatch
 
     public ProtoNaming? ParameterNaming { get; }
 
+    public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; }
+
     public bool KeepAsyncSuffix { get; }
 
     public string? Path { get; }
@@ -37,6 +39,7 @@ public class ProtoInfoMatch
         ProtoErrorType error,
         ProtoNaming naming,
         ProtoNaming? parameterNaming,
+        ProtoSingleJsonParameterWrapping? singleJsonParameterWrapping,
         bool keepAsyncSuffix,
         string? path,
         IReadOnlyDictionary<string, MethodGenerationOptions> methodOptions)
@@ -49,6 +52,7 @@ public class ProtoInfoMatch
         Error = error;
         Naming = naming;
         ParameterNaming = parameterNaming;
+        SingleJsonParameterWrapping = singleJsonParameterWrapping;
         KeepAsyncSuffix = keepAsyncSuffix;
         Path = path;
         MethodOptions = methodOptions;

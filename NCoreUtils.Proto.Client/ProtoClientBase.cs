@@ -1,5 +1,6 @@
 using System;
 using System.Net.Http;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Threading;
 using System.Threading.Tasks;
@@ -14,6 +15,8 @@ public abstract class ProtoClientBase
     protected IHttpClientFactory HttpClientFactory { get; }
 
     protected abstract string HttpClientConfiguration { get; }
+
+    protected virtual MediaTypeHeaderValue? JsonMediaType => default;
 
     protected ProtoClientBase(IEndpointConfiguration configuration, IHttpClientFactory httpClientFactory)
     {

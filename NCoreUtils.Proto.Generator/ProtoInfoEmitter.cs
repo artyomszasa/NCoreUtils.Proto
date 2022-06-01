@@ -20,13 +20,15 @@ internal class ProtoInfoEmitter
 
         public const string MethodId = ""{desc.MethodId}"";
 
-        public const global::NCoreUtils.Proto.InputType Input = NCoreUtils.Proto.InputType.{desc.Input};
+        public const global::NCoreUtils.Proto.InputType Input = global::NCoreUtils.Proto.InputType.{desc.Input};
 
-        public const global::NCoreUtils.Proto.OutputType Output = NCoreUtils.Proto.OutputType.{desc.Output};
+        public const global::NCoreUtils.Proto.OutputType Output = global::NCoreUtils.Proto.OutputType.{desc.Output};
 
-        public const global::NCoreUtils.Proto.ErrorType Error = NCoreUtils.Proto.ErrorType.{desc.Error};
+        public const global::NCoreUtils.Proto.ErrorType Error = global::NCoreUtils.Proto.ErrorType.{desc.Error};
 
         {(desc.ParameterNaming.HasValue ? $"public const global::NCoreUtils.Proto.Naming ParameterNaming = global::NCoreUtils.Proto.Naming.{desc.ParameterNaming.Value};" : string.Empty)}
+
+        public const global::NCoreUtils.Proto.SingleJsonParameterWrapping SingleJsonParameterWrapping = global::NCoreUtils.Proto.SingleJsonParameterWrapping.{desc.SingleJsonParameterWrapping};
 
         public const string Path = ""{desc.Path}"";
 
@@ -35,6 +37,10 @@ internal class ProtoInfoEmitter
 
     private string EmitInputDto(MethodDescriptor desc)
     {
+        if (desc.SingleJsonParameterWrapping == ProtoSingleJsonParameterWrapping.DoNotWrap && desc.Parameters.Count == 1)
+        {
+            return string.Empty;
+        }
         return @$"public class {desc.InputDtoTypeName}
 {{
     {string.Join(Environment.NewLine + "    ", desc.Parameters.Select(e => $"public {e.TypeName} {e.Name} {{ get; }}"))}

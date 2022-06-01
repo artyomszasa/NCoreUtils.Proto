@@ -25,5 +25,7 @@ public class BasicTests : BasicTestsBase<MathStartup>
         Assert.NotNull(data);
         Assert.Equal(2, data!.Num);
         Assert.Equal("abc", data.Str);
+        var nullData = await math.OverrideNumAsync(null, CancellationToken.None);
+        Assert.Null(nullData);
     }
 }

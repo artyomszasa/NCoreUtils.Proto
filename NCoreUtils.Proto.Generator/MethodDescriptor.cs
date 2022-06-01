@@ -32,6 +32,8 @@ internal class MethodDescriptor
 
     public ProtoNaming? ParameterNaming { get; }
 
+    public ProtoSingleJsonParameterWrapping SingleJsonParameterWrapping { get; }
+
     public TypeName? InputDtoTypeName { get; }
 
     public MethodDescriptor(
@@ -49,6 +51,7 @@ internal class MethodDescriptor
         ProtoOutputType output,
         ProtoErrorType error,
         ProtoNaming? parameterNaming,
+        ProtoSingleJsonParameterWrapping singleJsonParameterWrapping,
         TypeName? inputDtoTypeName)
     {
         ReturnType = returnType;
@@ -65,6 +68,7 @@ internal class MethodDescriptor
         Output = output;
         Error = error;
         ParameterNaming = parameterNaming;
+        SingleJsonParameterWrapping = singleJsonParameterWrapping;
         InputDtoTypeName = inputDtoTypeName;
     }
 }

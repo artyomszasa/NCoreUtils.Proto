@@ -111,6 +111,9 @@ public class ProtoInfoSyntaxReceiver : ISyntaxContextReceiver
                                 case "ParameterNaming":
                                     target.ParameterNaming = GetConstantAsEnum<ProtoNaming>(context, arg.Expression);
                                     break;
+                                case "SingleJsonParameterWrapping":
+                                    target.SingleJsonParameterWrapping = GetConstantAsEnum<ProtoSingleJsonParameterWrapping>(context, arg.Expression);
+                                    break;
                                 case "KeepAsyncSuffix":
                                     target.KeepAsyncSuffix = GetConstantAsBoolean(context, arg.Expression);
                                     break;
@@ -171,6 +174,9 @@ public class ProtoInfoSyntaxReceiver : ISyntaxContextReceiver
                                         break;
                                     case "ParameterNaming":
                                         opts.ParameterNaming = GetConstantAsEnum<ProtoNaming>(context, arg.Expression);
+                                        break;
+                                    case "SingleJsonParameterWrapping":
+                                        opts.SingleJsonParameterWrapping = GetConstantAsEnum<ProtoSingleJsonParameterWrapping>(context, arg.Expression);
                                         break;
                                     case "KeepAsyncSuffix":
                                         opts.KeepAsyncSuffix = GetConstantAsBoolean(context, arg.Expression);

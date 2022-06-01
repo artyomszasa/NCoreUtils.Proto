@@ -15,6 +15,8 @@ internal class ProtoImplEmitter
 
     private string EmitRequestReader(MethodDescriptor desc) => desc.Input switch
     {
+        ProtoInputType.Json when true == desc.InputDtoTypeName?.IsNullableReference => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        => await global::System.Text.Json.JsonSerializer.DeserializeAsync(request.Body, {Info.JsonSerializerContextType}.Default.{desc.InputDtoTypeName!.JsonContextName}, cancellationToken);",
         ProtoInputType.Json => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         => (await global::System.Text.Json.JsonSerializer.DeserializeAsync(request.Body, {Info.JsonSerializerContextType}.Default.{desc.InputDtoTypeName!.JsonContextName}, cancellationToken))
             ?? throw new global::NCoreUtils.Proto.ProtoException(""generic_error"", ""Unable to deserialize JSON arguments for {Info.InterfaceFullName}.{desc.MethodName}."");",
@@ -53,7 +55,7 @@ internal class ProtoImplEmitter
         try
         {{
             {(desc.Parameters.Count > 0 ? $"var arguments = await Read{desc.MethodId}RequestAsync(httpContext.Request, httpContext.RequestAborted);" : string.Empty)}
-            {(desc.NoReturn ? string.Empty : "var result = ")}await Impl.{desc.MethodName}({string.Join(", ", desc.Parameters.Select(e => $"arguments.{e.Name}"))}{(desc.UsesCancellation ? $"{(desc.Parameters.Count == 0 ? string.Empty : ", ")}httpContext.RequestAborted" : string.Empty)});
+            {(desc.NoReturn ? string.Empty : "var result = ")}await Impl.{desc.MethodName}({(desc.SingleJsonParameterWrapping == ProtoSingleJsonParameterWrapping.DoNotWrap && desc.Parameters.Count == 1 ? "arguments" : string.Join(", ", desc.Parameters.Select(e => $"arguments.{e.Name}")))}{(desc.UsesCancellation ? $"{(desc.Parameters.Count == 0 ? string.Empty : ", ")}httpContext.RequestAborted" : string.Empty)});
             {(desc.NoReturn ? string.Empty : $"await Write{desc.MethodId}ResultAsync(httpContext.Response, result, httpContext.RequestAborted);")}
         }}
         catch (global::System.Exception exn)

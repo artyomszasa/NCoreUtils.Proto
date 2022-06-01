@@ -14,10 +14,18 @@ internal class ProtoClientEmitter
     }
 
     private string EmitCreateJsonContentMethod(MethodDescriptor desc)
-        => @$"protected virtual global::System.Net.Http.HttpContent Create{desc.MethodId}RequestContent({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
+        => desc.SingleJsonParameterWrapping switch
+        {
+            ProtoSingleJsonParameterWrapping.DoNotWrap when desc.Parameters.Count == 1
+                => @$"protected virtual global::System.Net.Http.HttpContent Create{desc.MethodId}RequestContent({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
-        return global::NCoreUtils.Proto.Internal.ProtoJsonContent.Create(new {desc.InputDtoTypeName}({string.Join(", ", desc.Parameters.Select(e => e.Name))}), {Info.JsonSerializerContextType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.Default.{desc.InputDtoTypeName!.JsonContextName});
-    }}";
+        return global::NCoreUtils.Proto.Internal.ProtoJsonContent.Create({desc.Parameters[0].Name}, {Info.JsonSerializerContextType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.Default.{desc.InputDtoTypeName!.JsonContextName}{(desc.InputDtoTypeName.IsNullableReference ? "!" : string.Empty)}, JsonMediaType);
+    }}",
+            _ => @$"protected virtual global::System.Net.Http.HttpContent Create{desc.MethodId}RequestContent({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
+    {{
+        return global::NCoreUtils.Proto.Internal.ProtoJsonContent.Create(new {desc.InputDtoTypeName}({string.Join(", ", desc.Parameters.Select(e => e.Name))}), {Info.JsonSerializerContextType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.Default.{desc.InputDtoTypeName!.JsonContextName}, JsonMediaType);
+    }}"
+        };
 
     private string EmitCreateFormContentMethod(MethodDescriptor desc)
     {
@@ -48,7 +56,7 @@ internal class ProtoClientEmitter
             {(desc.Parameters.Count == 0 ? string.Empty : "+ ")}{string.Join(Environment.NewLine + "            + ", desc.Parameters.Select((e, i) => $"$\"{(i == 0 ? '?' : '&')}{e.Key}={{Escape(StringifyArgument({e.Name}))}}\""))};
         return new global::System.Net.Http.HttpRequestMessage(global::System.Net.Http.HttpMethod.{desc.Verb}, path);
 
-        static string Escape(string? value) => global::System.Uri.EscapeDataString(value ?? string.Empty);
+        {(desc.Parameters.Count == 0 ? string.Empty : "static string Escape(string? value) => global::System.Uri.EscapeDataString(value ?? string.Empty);")}
     }}"     : @$"protected virtual global::System.Net.Http.HttpRequestMessage Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         return new global::System.Net.Http.HttpRequestMessage(global::System.Net.Http.HttpMethod.{desc.Verb}, GetCachedMethodPath(Methods.{desc.MethodId}))
@@ -64,17 +72,24 @@ internal class ProtoClientEmitter
     {{
         return {(desc.AsyncReturnType == AsyncReturnType.ValueTask ? $"new {desc.ReturnType}(" : string.Empty)}global::System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync(response.Content, {Info.JsonSerializerContextType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.Default.{desc.ReturnValueType.JsonContextName}, cancellationToken)!{(desc.AsyncReturnType == AsyncReturnType.ValueTask ? $")" : string.Empty)};
     }}",
+            ProtoOutputType.Custom => string.Empty,
             var output => throw new InvalidOperationException($"Unsupported ouput type {output}.")
         };
 
     private string EmitMethod(MethodDescriptor desc)
     {
+        var requestVar = "request";
+        var requestVarSeed = 0;
+        while (desc.Parameters.Any(p => p.Name == requestVar))
+        {
+            requestVar = $"request{++requestVarSeed}";
+        }
         var ctoken = desc.UsesCancellation ? "cancellationToken" : "global::System.Threading.CancellationToken.None";
         return @$"public virtual async {desc.ReturnType} {desc.MethodName}({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))}{(desc.UsesCancellation ? (desc.Parameters.Count > 0 ? ", " : string.Empty) + "global::System.Threading.CancellationToken cancellationToken" : string.Empty)})
     {{
-        var request = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
+        var {requestVar} = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
         using var client = CreateHttpClient();
-        using var response = await client.SendAsync(request, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
+        using var response = await client.SendAsync({requestVar}, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
         await HandleErrors(response, {ctoken});
         {(desc.NoReturn ? string.Empty : $"return await Read{desc.MethodId}Response(response, {ctoken});")}
     }}";

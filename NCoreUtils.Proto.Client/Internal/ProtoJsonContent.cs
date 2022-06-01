@@ -10,8 +10,8 @@ namespace NCoreUtils.Proto.Internal;
 
 public static class ProtoJsonContent
 {
-    public static ProtoJsonContent<T> Create<T>(T value, JsonTypeInfo<T> typeInfo)
-        => new(value, typeInfo);
+    public static ProtoJsonContent<T> Create<T>(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType)
+        => new(value, typeInfo, mediaType);
 }
 
 public class ProtoJsonContent<T> : HttpContent
@@ -22,11 +22,11 @@ public class ProtoJsonContent<T> : HttpContent
 
     public T Value { get; }
 
-    public ProtoJsonContent(T value, JsonTypeInfo<T> typeInfo)
+    public ProtoJsonContent(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType)
     {
         TypeInfo = typeInfo;
         Value = value;
-        Headers.ContentType = Utf8JsonMediaType ??= new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" };
+        Headers.ContentType = mediaType ?? (Utf8JsonMediaType ??= new MediaTypeHeaderValue("application/json") { CharSet = "utf-8" });
     }
 
     protected override Task SerializeToStreamAsync(Stream stream, TransportContext? context)

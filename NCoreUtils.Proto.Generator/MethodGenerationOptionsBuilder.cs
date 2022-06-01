@@ -14,6 +14,8 @@ public class MethodGenerationOptionsBuilder
 
     public ProtoNaming? ParameterNaming { get; set; }
 
+    public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; set; }
+
     public bool? KeepAsyncSuffix { get; set; }
 
     public string? Path { get; set; }
@@ -25,6 +27,7 @@ public class MethodGenerationOptionsBuilder
         Error,
         Naming,
         ParameterNaming,
+        SingleJsonParameterWrapping,
         KeepAsyncSuffix,
         Path
     );

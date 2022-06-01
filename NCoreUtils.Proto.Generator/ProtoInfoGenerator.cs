@@ -26,6 +26,8 @@ public class ProtoInfoAttribute : System.Attribute
 
     public Naming ParameterNaming { get; set; }
 
+    public SingleJsonParameterWrapping SingleJsonParameterWrapping { get; set; }
+
     public bool KeepAsyncSuffix { get; set; }
 
     public string? Path { get; set; }
@@ -48,6 +50,8 @@ public class ProtoMethodInfoAttribute : System.Attribute
     public Naming Naming { get; set; }
 
     public Naming ParameterNaming { get; set; }
+
+    public SingleJsonParameterWrapping SingleJsonParameterWrapping { get; set; }
 
     public bool KeepAsyncSuffix { get; set; }
 

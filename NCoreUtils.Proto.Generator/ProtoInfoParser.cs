@@ -86,6 +86,7 @@ internal class ProtoInfoParser : ProtoParser
                     ProtoOutputType.Default when !noReturn => ProtoOutputType.Json,
                     var o => o
                 };
+                var sjaw = (opts?.SingleJsonParameterWrapping ?? match.SingleJsonParameterWrapping ?? ProtoSingleJsonParameterWrapping.DoNotWrap);
 
                 // var path = '/' + rootPath.Trim('/') + '/' + (opts?.Path ?? ((opts?.Naming ?? match.Naming) switch
                 // {
@@ -118,7 +119,12 @@ internal class ProtoInfoParser : ProtoParser
                     output: output,
                     error: opts?.Error ?? match.Error,
                     parameterNaming: parameterNaming,
-                    inputDtoTypeName: TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args")
+                    singleJsonParameterWrapping: sjaw,
+                    inputDtoTypeName: sjaw switch
+                    {
+                        ProtoSingleJsonParameterWrapping.DoNotWrap when parameters.Count == 1 => TypeName.Create(parameters[0].Type),
+                        _ => TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args")
+                    }
                 );
             })
             .ToList();

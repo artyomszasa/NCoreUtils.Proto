@@ -72,6 +72,11 @@ internal abstract class ProtoConsumerParser : ProtoParser
                     ?.ConstantValue
                     ?.UnboxEnum<ProtoErrorType>()
                     ?? throw new ProtoClientInvalidInfoException($"Method {e.Name} has no error defined");
+                var sjaw = e.GetMembers().OfType<IFieldSymbol>()
+                    .FirstOrDefault(f => f.Name == "SingleJsonParameterWrapping")
+                    ?.ConstantValue
+                    ?.UnboxEnum<ProtoSingleJsonParameterWrapping>()
+                    ?? throw new ProtoClientInvalidInfoException($"Method {e.Name} has no single json parameter wrapping defined");
                 var verb = input switch
                 {
                     ProtoInputType.Query => "Get",
@@ -95,6 +100,7 @@ internal abstract class ProtoConsumerParser : ProtoParser
                     output: output,
                     error: error,
                     parameterNaming: parameterNaming,
+                    singleJsonParameterWrapping: sjaw,
                     inputDtoTypeName: inputDtoType is null ? default : TypeName.Create(inputDtoType)
                 );
             })

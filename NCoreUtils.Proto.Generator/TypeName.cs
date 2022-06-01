@@ -10,6 +10,8 @@ public abstract class TypeName
     {
         private readonly string _fullName;
 
+        public override bool IsNullableReference => _fullName.EndsWith("?");
+
         public override string FullName => _fullName;
 
         public override string JsonContextName => throw new NotSupportedException();
@@ -24,7 +26,10 @@ public abstract class TypeName
     {
         public ITypeSymbol Type { get; }
 
+        public override bool IsNullableReference => Type.NullableAnnotation == NullableAnnotation.Annotated;
+
         public override string FullName => Type.ToFullMaybeNullableName();
+
         public override string JsonContextName => GetTypeInfoPropertyName(Type);
 
         public DefinedTypeName(ITypeSymbol type)
@@ -67,6 +72,8 @@ public abstract class TypeName
 
     public static TypeName Create(string fullName)
         => new GenerationTimeTypeName(fullName);
+
+    public abstract bool IsNullableReference { get; }
 
     public abstract string FullName { get; }
 

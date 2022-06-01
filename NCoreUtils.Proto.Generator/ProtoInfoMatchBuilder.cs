@@ -27,6 +27,8 @@ public class ProtoInfoMatchBuilder
 
     public ProtoNaming? ParameterNaming { get; set; }
 
+    public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; set; }
+
     public bool KeepAsyncSuffix { get; set; }
 
     public string? Path { get; set; }
@@ -46,6 +48,19 @@ public class ProtoInfoMatchBuilder
     }
 
     public ProtoInfoMatch Build() => IsValid
-        ? new ProtoInfoMatch(SemanticModel, Cds, TargetType, Input, Output, Error, Naming, ParameterNaming, KeepAsyncSuffix, Path, _methodOptions ?? NoMethodOptions)
+        ? new ProtoInfoMatch(
+            SemanticModel,
+            Cds,
+            TargetType,
+            Input,
+            Output,
+            Error,
+            Naming,
+            ParameterNaming,
+            SingleJsonParameterWrapping,
+            KeepAsyncSuffix,
+            Path,
+            _methodOptions ?? NoMethodOptions
+        )
         : throw new InvalidOperationException("No target type defined.");
 }
