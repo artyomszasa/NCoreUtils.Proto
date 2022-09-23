@@ -59,7 +59,16 @@ internal class ProtoServiceAttribute : System.Attribute
         foreach (var match in receiver.Matches)
         {
             var service = new ProtoImplParser(match.SemanticModel).Parse(match);
-            var code = new ProtoImplEmitter(service).EmitImpl(GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated", "Proto" + match.Cds.Identifier.ValueText + "Implementation");
+            // NOTE: try to get any partial implementations
+            var @namespace = GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated";
+            var name = "Proto" + match.Cds.Identifier.ValueText + "Implementation";
+            var ty = match.SemanticModel.Compilation.GetTypeByMetadataName(@namespace + "." + name);
+            var code = new ProtoImplEmitter(service)
+                .EmitImpl(
+                    @namespace,
+                    name,
+                    ty
+                );
             context.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code, Utf8));
         }
     }
