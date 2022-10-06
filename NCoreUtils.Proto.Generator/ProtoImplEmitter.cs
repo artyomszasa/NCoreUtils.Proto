@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Microsoft.CodeAnalysis;
 
@@ -8,9 +9,12 @@ internal class ProtoImplEmitter
 {
     private ProtoImplInfo Info { get; }
 
-    public ProtoImplEmitter(ProtoImplInfo info)
+    private ProtoImplEmitterContext Context { get; }
+
+    public ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext context)
     {
-        Info = info;
+        Info = info ?? throw new ArgumentNullException(nameof(info));
+        Context = context ?? throw new ArgumentNullException(nameof(context));
     }
 
     private static string EmitReadArgumentMethod(ITypeSymbol? implType, ParameterDescriptor p)
@@ -69,8 +73,41 @@ internal class ProtoImplEmitter
             _ => string.Empty
         };
 
-    private string EmitMethodInvoker(MethodDescriptor desc)
-        => @$"protected internal virtual async global::System.Threading.Tasks.Task Invoke{desc.MethodId}Async(global::Microsoft.AspNetCore.Http.HttpContext httpContext)
+    private string EmitMethodInvoker(MethodDescriptor desc, ITypeSymbol? implType)
+    {
+        string shouldPassExceptionPredicate;
+        if (implType is not null
+            && implType.GetMembers()
+                .OfType<IMethodSymbol>()
+                .TryGetFirst(e => e.Name == "ShouldPassException", out var m))
+        {
+            var arguments = new List<string>(4);
+            foreach (var p in m.Parameters)
+            {
+                if (Context.IsCancellationToken(p.Type))
+                {
+                    arguments.Add("httpContext.RequestAborted");
+                }
+                else if (Context.IsException(p.Type))
+                {
+                    arguments.Add("exn");
+                }
+                else if (Context.IsHttpContext(p.Type))
+                {
+                    arguments.Add("httpContext");
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Cannot provider argument of type {p.Type} for {implType.Name}.{m.Name}.");
+                }
+            }
+            shouldPassExceptionPredicate = $"{m.Name}({string.Join(", ", arguments)})";
+        }
+        else
+        {
+            shouldPassExceptionPredicate = "exn is global::System.OperationCanceledException && httpContext.RequestAborted.IsCancellationRequested";
+        }
+        return @$"protected internal virtual async global::System.Threading.Tasks.Task Invoke{desc.MethodId}Async(global::Microsoft.AspNetCore.Http.HttpContext httpContext)
     {{
         try
         {{
@@ -78,18 +115,19 @@ internal class ProtoImplEmitter
             {(desc.NoReturn ? string.Empty : "var result = ")}await Impl.{desc.MethodName}({(desc.SingleJsonParameterWrapping == ProtoSingleJsonParameterWrapping.DoNotWrap && desc.Parameters.Count == 1 ? "arguments" : string.Join(", ", desc.Parameters.Select(e => $"arguments.{e.Name}")))}{(desc.UsesCancellation ? $"{(desc.Parameters.Count == 0 ? string.Empty : ", ")}httpContext.RequestAborted" : string.Empty)});
             {(desc.NoReturn ? string.Empty : $"await Write{desc.MethodId}ResultAsync(httpContext.Response, result, httpContext.RequestAborted);")}
         }}
-        catch (global::System.OperationCanceledException) when (httpContext.RequestAborted.IsCancellationRequested)
-        {{
-            throw;
-        }}
         catch (global::System.Exception exn)
         {{
+            if ({shouldPassExceptionPredicate})
+            {{
+                throw;
+            }}
             var logger = global::Microsoft.Extensions.Logging.LoggerFactoryExtensions.CreateLogger<{Info.ImplType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>(
                 global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::Microsoft.Extensions.Logging.ILoggerFactory>(httpContext.RequestServices)
             );
             await Write{desc.MethodId}ErrorAsync(logger, httpContext.Response, exn, httpContext.RequestAborted);
         }}
     }}";
+    }
 
     public string EmitImpl(string @namespace, string name, ITypeSymbol? implType)
     {
@@ -109,7 +147,7 @@ public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationB
 
     {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitResultWriter))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitMethodInvoker))}
+    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(m => EmitMethodInvoker(m, implType)))}
 }}
 
 public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
