@@ -135,7 +135,7 @@ public static class ServiceCollection{name}Extensions
         => services.Add{name}(new {name}Configuration
         {{
             HttpClient = configuration[""HttpClient""],
-            Endpoint = configuration[""Endpoint""],
+            Endpoint = configuration[""Endpoint""] ?? throw new global::System.InvalidOperationException(""Missing endpoint for {name}.""),
             Path = configuration[""Path""],
         }});
 }}

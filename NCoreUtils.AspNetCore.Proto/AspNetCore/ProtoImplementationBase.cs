@@ -11,7 +11,7 @@ namespace NCoreUtils.AspNetCore;
 
 public abstract class ProtoImplementationBase
 {
-    protected virtual T ReadArgument<T>(string input)
+    protected virtual T ReadArgument<T>(string? input)
         => input is null ? default! : (T)Convert.ChangeType(input, typeof(T));
 
     protected virtual Task WriteErrorAsync(ILogger logger, HttpResponse response, Exception exn, IStatusCodeResponse status, CancellationToken cancellationToken)
