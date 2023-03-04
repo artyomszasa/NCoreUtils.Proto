@@ -129,11 +129,18 @@ internal class ProtoImplEmitter
     }}";
     }
 
-    public string EmitImpl(string @namespace, string name, ITypeSymbol? implType)
+    public string EmitImpl(string @namespace, string rootName, string name, ITypeSymbol? implType)
     {
+        const string TEndpointBuilder = "global::Microsoft.AspNetCore.Builder.EndpointBuilder";
+
         return @$"#nullable enable
 namespace {@namespace}
 {{
+public partial class {rootName}
+{{
+    public enum Methods {{ {string.Join(", ", Info.Service.Methods.Select(e => e.MethodId))} }}
+}}
+
 public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationBase
 {{
     public {Info.InterfaceFullName} Impl {{ get; }}
@@ -150,7 +157,7 @@ public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationB
     {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(m => EmitMethodInvoker(m, implType)))}
 }}
 
-public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::Microsoft.AspNetCore.Builder.IEndpointConventionBuilder
+public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods>
 {{
     private static class Segments
     {{
@@ -167,7 +174,9 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
 
     private global::System.Collections.Generic.IReadOnlyList<global::Microsoft.AspNetCore.Http.Endpoint>? _endpoints;
 
-    private global::System.Collections.Generic.List<global::System.Action<global::Microsoft.AspNetCore.Builder.EndpointBuilder>> Conventions {{ get; }} = new global::System.Collections.Generic.List<global::System.Action<global::Microsoft.AspNetCore.Builder.EndpointBuilder>>();
+    private {TListOf(TActionOf(TEndpointBuilder))} Conventions {{ get; }} = new {TListOf(TActionOf(TEndpointBuilder))}();
+
+    private {TDictionaryOf($"{rootName}.Methods", TListOf(TActionOf(TEndpointBuilder)))} MethodConventions {{ get; }} = new {TDictionaryOf($"{rootName}.Methods", TListOf(TActionOf(TEndpointBuilder)))}();
 
     private object Sync {{ get; }} = new object();
 
@@ -218,8 +227,18 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
         return endpoints;
     }}
 
-    public void Add(global::System.Action<global::Microsoft.AspNetCore.Builder.EndpointBuilder> convention)
+    public void Add({TActionOf(TEndpointBuilder)} convention)
         => Conventions.Add(convention);
+
+    public void Add({rootName}.Methods method, {TActionOf(TEndpointBuilder)} convention)
+    {{
+        if (!MethodConventions.TryGetValue(method, out var conventions))
+        {{
+            conventions = new {TListOf(TActionOf(TEndpointBuilder))}();
+            MethodConventions.Add(method, conventions);
+        }}
+        conventions.Add(convention);
+    }}
 
     public override global::Microsoft.Extensions.Primitives.IChangeToken GetChangeToken()
         => global::Microsoft.Extensions.FileProviders.NullChangeToken.Singleton;
@@ -227,7 +246,7 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
 
 public static class EndpointRouteBuilder{name}Extensions
 {{
-    public static global::Microsoft.AspNetCore.Builder.IEndpointConventionBuilder Map{Info.ImplType.Name}(
+    public static global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods> Map{Info.ImplType.Name}(
         this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints,
         string? path = default)
     {{
@@ -238,21 +257,37 @@ public static class EndpointRouteBuilder{name}Extensions
 }}
 }}";
 
-    string EmitAddEndpoint(MethodDescriptor desc)
-        => @$"
-        global::Microsoft.AspNetCore.Http.RequestDelegate delegate{desc.MethodId} = httpContext =>
-        {{
-            var impl = {(Info.ImplementationFactory is null ? $"global::Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<{name}>" : $"{Info.ImplementationFactory.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.CreateService")}(httpContext.RequestServices);
-            return impl.Invoke{desc.MethodId}Async(httpContext);
-        }};
-        var builder{desc.MethodId} = new global::Microsoft.AspNetCore.Routing.RouteEndpointBuilder(delegate{desc.MethodId}, Segments.Combine(servicePathSegments, ""{desc.Path}""), 100)
-        {{
-            DisplayName = ""{Info.InterfaceType.Name}.{desc.MethodId}""
-        }};
-        foreach (var convention in Conventions)
-        {{
-            convention(builder{desc.MethodId});
-        }}
-        endpoints.Add(builder{desc.MethodId}.Build());";
+        string EmitAddEndpoint(MethodDescriptor desc)
+            => @$"
+            global::Microsoft.AspNetCore.Http.RequestDelegate delegate{desc.MethodId} = httpContext =>
+            {{
+                var impl = {(Info.ImplementationFactory is null ? $"global::Microsoft.Extensions.DependencyInjection.ActivatorUtilities.CreateInstance<{name}>" : $"{Info.ImplementationFactory.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.CreateService")}(httpContext.RequestServices);
+                return impl.Invoke{desc.MethodId}Async(httpContext);
+            }};
+            var builder{desc.MethodId} = new global::Microsoft.AspNetCore.Routing.RouteEndpointBuilder(delegate{desc.MethodId}, Segments.Combine(servicePathSegments, ""{desc.Path}""), 100)
+            {{
+                DisplayName = ""{Info.InterfaceType.Name}.{desc.MethodId}""
+            }};
+            foreach (var convention in Conventions)
+            {{
+                convention(builder{desc.MethodId});
+            }}
+            if (MethodConventions.TryGetValue({rootName}.Methods.{desc.MethodId}, out var conventions{desc.MethodId}))
+            {{
+                foreach (var convention in conventions{desc.MethodId})
+                {{
+                    convention(builder{desc.MethodId});
+                }}
+            }}
+            endpoints.Add(builder{desc.MethodId}.Build());";
+
+        static string TDictionaryOf(string keyType, string itemType)
+            => $"global::System.Collections.Generic.Dictionary<{keyType}, {itemType}>";
+
+        static string TListOf(string itemType)
+            => $"global::System.Collections.Generic.List<{itemType}>";
+
+        static string TActionOf(string itemType)
+            => $"global::System.Action<{itemType}>";
     }
 }
