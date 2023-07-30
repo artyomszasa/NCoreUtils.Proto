@@ -37,7 +37,7 @@ namespace NCoreUtils.Text
         /// </returns>
         public bool TryApply(ReadOnlySpan<char> source, Span<char> destination, out int written)
         {
-            var culture = CultureInfo.CurrentCulture;
+            var culture = CultureInfo.InvariantCulture;
             var builder = new SpanBuilder(destination);
             var isDelimiter = true;
             foreach (var rune in source.EnumerateRunes())

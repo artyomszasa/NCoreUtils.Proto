@@ -1,10 +1,15 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 
 namespace NCoreUtils.Proto;
 
 internal class ProtoInfoEmitter
 {
+    private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        ? "\r\n"
+        : "\n";
+
     private ProtoServiceInfo Info { get; }
 
     public ProtoInfoEmitter(ProtoServiceInfo info)
@@ -43,11 +48,11 @@ internal class ProtoInfoEmitter
         }
         return @$"public class {desc.InputDtoTypeName}
 {{
-    {string.Join(Environment.NewLine + "    ", desc.Parameters.Select(e => $"public {e.TypeName} {e.Name} {{ get; }}"))}
+    {string.Join(NewLine + "    ", desc.Parameters.Select(e => $"public {e.TypeName} {e.Name} {{ get; }}"))}
 
     public {desc.InputDtoTypeName}({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
-        {string.Join(Environment.NewLine + "        ", desc.Parameters.Select(e => $"this.{e.Name} = {e.Name};"))}
+        {string.Join(NewLine + "        ", desc.Parameters.Select(e => $"this.{e.Name} = {e.Name};"))}
     }}
 }};";
     }
@@ -55,9 +60,9 @@ internal class ProtoInfoEmitter
     private string EmitRootSerializationClass(string name)
         => @$"public class JsonRoot{name}
 {{
-    {string.Join(Environment.NewLine + "    ", Info.Methods.Where(m => m.Input == ProtoInputType.Json).Select(m => $"public {m.InputDtoTypeName} {m.MethodId}Args {{ get; set; }} = default!;"))}
+    {string.Join(NewLine + "    ", Info.Methods.Where(m => m.Input == ProtoInputType.Json).Select(m => $"public {m.InputDtoTypeName} {m.MethodId}Args {{ get; set; }} = default!;"))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Methods.Where(m => !m.NoReturn && m.Output == ProtoOutputType.Json).Select(m => $"public {m.ReturnValueType} {m.MethodId}Result {{ get; set; }} = default!;"))}
+    {string.Join(NewLine + "    ", Info.Methods.Where(m => !m.NoReturn && m.Output == ProtoOutputType.Json).Select(m => $"public {m.ReturnValueType} {m.MethodId}Result {{ get; set; }} = default!;"))}
 }}";
 
     public string EmitServiceInfo(string @namespace, string name)
@@ -67,11 +72,11 @@ namespace {@namespace}
 {{
 public partial class {name} : global::NCoreUtils.Proto.Internal.ProtoServiceInfo<{Info.TargetFullName}>
 {{
-    {string.Join(Environment.NewLine + "    ", Info.Methods.Select(EmitMethodInfo))}
+    {string.Join(NewLine + "    ", Info.Methods.Select(EmitMethodInfo))}
 
     public const string Path = ""{Info.Path}"";
 }}
-{string.Join(Environment.NewLine, Info.Methods.Select(EmitInputDto))}
+{string.Join(NewLine, Info.Methods.Select(EmitInputDto))}
 {EmitRootSerializationClass(name)}
 }}";
     }

@@ -1,4 +1,8 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using System.Threading;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
@@ -6,7 +10,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace NCoreUtils.Proto;
 
 [Generator]
-public class ProtoImplGenerator : ISourceGenerator
+public class ProtoImplGenerator : IIncrementalGenerator
 {
     private const string attributeSource = @"#nullable enable
 namespace NCoreUtils.Proto
@@ -28,10 +32,16 @@ internal class ProtoServiceAttribute : System.Attribute
         JsonSerializerContext = jsonSerializerContext ?? throw new System.ArgumentNullException(nameof(jsonSerializerContext));
     }
 }
-}
-";
+}";
 
-    private static UTF8Encoding Utf8 { get; } = new(false);
+    private static string? GetConstantAsMaybeString(SemanticModel semanticModel, ExpressionSyntax expression)
+    {
+        return semanticModel.GetConstantValue(expression) switch
+        {
+            { HasValue: true, Value: var value } => value?.ToString(),
+            _ => throw new InvalidOperationException($"Unable to get string? value from {expression}")
+        };
+    }
 
     private static string? GetSyntaxNamespace(SyntaxNode node)
     {
@@ -50,13 +60,82 @@ internal class ProtoServiceAttribute : System.Attribute
         return GetSyntaxNamespace(node.Parent);
     }
 
-    public void Execute(GeneratorExecutionContext context)
+    private static UTF8Encoding Utf8 { get; } = new(false);
+
+    private static ProtoImplMatch? GetTargetOrNull(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
     {
-        if (context.SyntaxContextReceiver is not ProtoImplSyntaxReceiver receiver || receiver.Matches is null)
+        if (context.TargetNode is ClassDeclarationSyntax cds)
         {
-            return;
+            ProtoImplMatchBuilder? target = default;
+            var attributes = cds.AttributeLists.SelectMany(list => list.Attributes);
+            foreach (var attribute in attributes)
+            {
+                if (context.SemanticModel.GetSymbolInfo(attribute).Symbol is not IMethodSymbol attributeSymbol)
+                {
+                    continue;
+                }
+                INamedTypeSymbol attributeContainingTypeSymbol = attributeSymbol.ContainingType;
+                string fullName = attributeContainingTypeSymbol.ToDisplayString();
+                if (fullName == "ProtoServiceAttribute" || fullName == "NCoreUtils.Proto.ProtoServiceAttribute")
+                {
+                    if (target is not null)
+                    {
+                        throw new InvalidOperationException("Multiple ProtoServiceAttribute are not allowed.");
+                    }
+                    target = new ProtoImplMatchBuilder(context.SemanticModel, cds);
+                    var args = (IReadOnlyList<AttributeArgumentSyntax>?)attribute.ArgumentList?.Arguments ?? Array.Empty<AttributeArgumentSyntax>();
+                    var i = 0;
+                    foreach (var arg in args)
+                    {
+                        if (arg.NameEquals is null)
+                        {
+                            if (i > 1)
+                            {
+                                throw new InvalidOperationException("ProtoServiceAttribute must contain exactly two not named argument.");
+                            }
+                            if (i == 0)
+                            {
+                                target.InfoType = context.SemanticModel.GetTypeInfo(arg.ChildNodes().Single().ChildNodes().Single()).ConvertedType;
+                            }
+                            else
+                            {
+                                target.JsonSerializerContext = context.SemanticModel.GetTypeInfo(arg.ChildNodes().Single().ChildNodes().Single()).ConvertedType;
+                            }
+                            ++i;
+                        }
+                        else
+                        {
+                            switch (arg.NameEquals.Name.Identifier.ValueText)
+                            {
+                                case "ImplementationFactory":
+                                    target.ImplementationFactory = context.SemanticModel.GetTypeInfo(arg.Expression.ChildNodes().Single()).ConvertedType;
+                                    break;
+                                case "Path":
+                                    target.Path = GetConstantAsMaybeString(context.SemanticModel, arg.Expression);
+                                    break;
+                            }
+                        }
+                    }
+                }
+            }
+            if (target is not null && target.IsValid)
+            {
+                return target.Build();
+            }
         }
-        foreach (var match in receiver.Matches)
+        return null;
+    }
+
+    public void Initialize(IncrementalGeneratorInitializationContext context)
+    {
+        context.RegisterPostInitializationOutput(ctx => ctx.AddSource("Attributes.g.cs", SourceText.From(attributeSource, Utf8)));
+        IncrementalValuesProvider<ProtoImplMatch> matches = context.SyntaxProvider.ForAttributeWithMetadataName(
+            "NCoreUtils.Proto.ProtoServiceAttribute",
+            (node, _) => node is ClassDeclarationSyntax,
+            GetTargetOrNull
+        ).Where(match => match is not null)!;
+
+        context.RegisterSourceOutput(matches, static (ctx, match) =>
         {
             var service = new ProtoImplParser(match.SemanticModel).Parse(match);
             // NOTE: try to get any partial implementations
@@ -71,13 +150,7 @@ internal class ProtoServiceAttribute : System.Attribute
                     name,
                     ty
                 );
-            context.AddSource($"{rootName}.g.cs", SourceText.From(code, Utf8));
-        }
-    }
-
-    public void Initialize(GeneratorInitializationContext context)
-    {
-        context.RegisterForPostInitialization(ctx => ctx.AddSource("Attributes.cs", SourceText.From(attributeSource, Utf8)));
-        context.RegisterForSyntaxNotifications(() => new ProtoImplSyntaxReceiver());
+            ctx.AddSource($"{rootName}.g.cs", SourceText.From(code, Utf8));
+        });
     }
 }

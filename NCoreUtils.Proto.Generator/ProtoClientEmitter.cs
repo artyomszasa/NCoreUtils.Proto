@@ -1,11 +1,16 @@
 using System;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
 internal class ProtoClientEmitter
 {
+    private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        ? "\r\n"
+        : "\n";
+
     private ProtoClientInfo Info { get; }
 
     public ProtoClientEmitter(ProtoClientInfo info)
@@ -32,7 +37,7 @@ internal class ProtoClientEmitter
         return @$"protected virtual global::System.Net.Http.HttpContent Create{desc.MethodId}RequestContent({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         var data = new global::System.Collections.Generic.Dictionary<string, string>({desc.Parameters.Count});
-        {string.Join(Environment.NewLine + "        ", desc.Parameters.Select(EmitAdd))}
+        {string.Join(NewLine + "        ", desc.Parameters.Select(EmitAdd))}
         return new global::System.Net.Http.FormUrlEncodedContent(data);
     }}";
 
@@ -53,7 +58,7 @@ internal class ProtoClientEmitter
             ? @$"protected virtual global::System.Net.Http.HttpRequestMessage Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         var path = GetCachedMethodPath(Methods.{desc.MethodId})
-            {(desc.Parameters.Count == 0 ? string.Empty : "+ ")}{string.Join(Environment.NewLine + "            + ", desc.Parameters.Select((e, i) => $"$\"{(i == 0 ? '?' : '&')}{e.Key}={{Escape(StringifyArgument({e.Name}))}}\""))};
+            {(desc.Parameters.Count == 0 ? string.Empty : "+ ")}{string.Join(NewLine + "            + ", desc.Parameters.Select((e, i) => $"$\"{(i == 0 ? '?' : '&')}{e.Key}={{Escape(StringifyArgument({e.Name}))}}\""))};
         return new global::System.Net.Http.HttpRequestMessage(global::System.Net.Http.HttpMethod.{desc.Verb}, path);
 
         {(desc.Parameters.Count == 0 ? string.Empty : "static string Escape(string? value) => global::System.Uri.EscapeDataString(value ?? string.Empty);")}
@@ -163,7 +168,7 @@ public partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.In
         }}
         var methodPaths = new global::System.Collections.Generic.Dictionary<Methods, string>({Info.Service.Methods.Count})
         {{
-            {string.Join("," + Environment.NewLine + "            ", Info.Service.Methods.Select(e => $"{{ Methods.{e.MethodId}, \"{e.Path}\" }}"))}
+            {string.Join("," + NewLine + "            ", Info.Service.Methods.Select(e => $"{{ Methods.{e.MethodId}, \"{e.Path}\" }}"))}
         }};
         MethodPaths = methodPaths;
         MethodPathFactory = GetMethodPath;
@@ -175,15 +180,15 @@ public partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.In
     protected virtual string GetMethodPath(Methods method)
         => string.IsNullOrEmpty(ServicePath) ? MethodPaths[method] : $""{{ServicePath}}/{{MethodPaths[method]}}"";
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Where(e => e.Input == ProtoInputType.Json).Select(EmitCreateJsonContentMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Where(e => e.Input == ProtoInputType.Json).Select(EmitCreateJsonContentMethod))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Where(e => e.Input == ProtoInputType.Form).Select(EmitCreateFormContentMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Where(e => e.Input == ProtoInputType.Form).Select(EmitCreateFormContentMethod))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitCreateRequestMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitCreateRequestMethod))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitReadResponseMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitReadResponseMethod))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitMethod))}
 }}
 }}";
 }

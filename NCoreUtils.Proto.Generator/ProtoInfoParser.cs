@@ -10,6 +10,15 @@ namespace NCoreUtils.Proto;
 
 internal class ProtoInfoParser : ProtoParser
 {
+    private static DiagnosticDescriptor PropertyNotSupportedDescriptor { get; } = new DiagnosticDescriptor(
+        id: "PROTO0001",
+        title: "Unsupported member",
+        messageFormat: "Property getters and setters are not supported (property = {0}).",
+        category: "Usage",
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true
+    );
+
     private static string ApplyInterfaceNaming(ITypeSymbol targetType, INamingConvention convention)
     {
         var name = targetType.Name;
@@ -46,7 +55,7 @@ internal class ProtoInfoParser : ProtoParser
         : base(semanticModel)
     { }
 
-    public ProtoServiceInfo ParseInfo(ProtoInfoMatch match)
+    public ProtoServiceInfo ParseInfo(SourceProductionContext context, ProtoInfoMatch match)
     {
         var tVoid = Compilation.GetSpecialType(SpecialType.System_Void);
         var rootPath = (match.Path ?? (match.Naming switch
@@ -60,6 +69,20 @@ internal class ProtoInfoParser : ProtoParser
 
         var methods = match.TargetType.GetMembers()
             .OfType<IMethodSymbol>()
+            .Where(m =>
+            {
+                // NOTE: exclude property getters/setters
+                if (m.MethodKind == MethodKind.PropertyGet || m.MethodKind == MethodKind.PropertySet)
+                {
+                    context.ReportDiagnostic(Diagnostic.Create(
+                        descriptor: PropertyNotSupportedDescriptor,
+                        location: m.Locations.FirstOrDefault(),
+                        messageArgs: new object[] { m.AssociatedSymbol?.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat) ?? string.Empty }
+                    ));
+                    return false;
+                }
+                return true;
+            })
             .Select(m =>
             {
                 var (returnValueType, asyncReturnType) = m.ReturnType switch

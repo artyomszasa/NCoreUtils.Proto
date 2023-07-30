@@ -1,12 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
 internal class ProtoImplEmitter
 {
+    private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
+        ? "\r\n"
+        : "\n";
+
     private ProtoImplInfo Info { get; }
 
     private ProtoImplEmitterContext Context { get; }
@@ -38,7 +43,7 @@ internal class ProtoImplEmitter
         {{
             var data = await request.ReadFormAsync(cancellationToken);
             return new {desc.InputDtoTypeName}(
-                {string.Join("," + Environment.NewLine + "                ", desc.Parameters.Select(e => $"{EmitReadArgumentMethod(implType, e)}(data[\"{e.Key}\"])"))}
+                {string.Join("," + NewLine + "                ", desc.Parameters.Select(e => $"{EmitReadArgumentMethod(implType, e)}(data[\"{e.Key}\"])"))}
             );
         }}";
     }
@@ -55,7 +60,7 @@ internal class ProtoImplEmitter
         {{
             var data = request.Query;
             return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(new {desc.InputDtoTypeName}(
-                {string.Join("," + Environment.NewLine + "                ", desc.Parameters.Select(e => $"ReadArgument<{e.TypeName}>(data[\"{e.Key}\"])"))}
+                {string.Join("," + NewLine + "                ", desc.Parameters.Select(e => $"ReadArgument<{e.TypeName}>(data[\"{e.Key}\"])"))}
             ));
         }}",
         _ => string.Empty
@@ -148,13 +153,13 @@ public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationB
     public {name}({Info.InterfaceFullName} impl)
         => Impl = impl ?? throw new global::System.ArgumentNullException(nameof(impl));
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(m => EmitRequestReader(m, implType)))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(m => EmitRequestReader(m, implType)))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitErrorWriter))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitErrorWriter))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(EmitResultWriter))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitResultWriter))}
 
-    {string.Join(Environment.NewLine + "    ", Info.Service.Methods.Select(m => EmitMethodInvoker(m, implType)))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(m => EmitMethodInvoker(m, implType)))}
 }}
 
 public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods>
@@ -209,7 +214,7 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
         var servicePathSegments = Path is null
             ? new global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternPathSegment[]
             {{
-                {(string.IsNullOrEmpty(Info.Service.Path) ? string.Empty : string.Join(',' + Environment.NewLine + "                ", Info.Service.Path.Split('/').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).Select(s => $"global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.Segment(global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.LiteralPart(\"{s}\"))")))}
+                {(string.IsNullOrEmpty(Info.Service.Path) ? string.Empty : string.Join(',' + NewLine + "                ", Info.Service.Path.Split('/').Select(s => s.Trim()).Where(s => !string.IsNullOrEmpty(s)).Select(s => $"global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.Segment(global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.LiteralPart(\"{s}\"))")))}
             }}
             : global::System.Linq.Enumerable.ToArray(
                 global::System.Linq.Enumerable.Select(
@@ -223,7 +228,7 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
                     s => global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.Segment(global::Microsoft.AspNetCore.Routing.Patterns.RoutePatternFactory.LiteralPart(s))
                 )
             );
-        {string.Join(Environment.NewLine + "        ", Info.Service.Methods.Select(EmitAddEndpoint))}
+        {string.Join(NewLine + "        ", Info.Service.Methods.Select(EmitAddEndpoint))}
         return endpoints;
     }}
 
