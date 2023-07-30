@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace NCoreUtils.Proto.Unit;
 
 [ProtoService(typeof(MathInfo), typeof(MathJsonSerializerContext))]
-public class MathService : IMath
+public partial class MathService : IMath
 {
     private int Counter { get; set; }
 

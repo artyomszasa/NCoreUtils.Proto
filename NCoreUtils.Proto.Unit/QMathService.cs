@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace NCoreUtils.Proto.Unit;
 
 [ProtoService(typeof(QMathInfo), typeof(QMathJsonSerializerContext))]
-public class QMathService : IMath
+public partial class QMathService : IMath
 {
     private int Counter { get; set; }
 
