@@ -3,7 +3,7 @@
     <TargetFrameworks>net7.0;net6.0;netstandard2.1</TargetFrameworks>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NCoreUtils.Proto.Abstractions\NCoreUtils.Proto.Abstractions.csproj" />
+    <ProjectReference Include="..\NCoreUtils.Proto.Shared\NCoreUtils.Proto.Shared.csproj" />
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' != 'net7.0' ">
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />

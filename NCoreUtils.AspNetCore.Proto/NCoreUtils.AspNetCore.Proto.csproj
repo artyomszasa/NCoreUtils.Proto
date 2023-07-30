@@ -7,7 +7,7 @@
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NCoreUtils.Proto.Abstractions\NCoreUtils.Proto.Abstractions.csproj" />
+    <ProjectReference Include="..\NCoreUtils.Proto.Shared\NCoreUtils.Proto.Shared.csproj" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="NCoreUtils.AspNetCore.ResponseErrors.Abstractions" Version="6.0.0" />

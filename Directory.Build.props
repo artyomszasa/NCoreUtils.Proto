@@ -3,6 +3,6 @@
     <LangVersion>11.0</LangVersion>
     <Nullable>enable</Nullable>
     <Trimmable>true</Trimmable>
-    <Version>6.0.0-rc09</Version>
+    <Version>6.0.0-rc13</Version>
   </PropertyGroup>
 </Project>
