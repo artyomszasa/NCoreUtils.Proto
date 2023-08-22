@@ -89,6 +89,7 @@ internal class ProtoInfoParser : ProtoParser
                 {
                     INamedTypeSymbol nts when Eqx(nts.ConstructedFrom, TypeTaskOf) => (nts.TypeArguments[0], AsyncReturnType.Task),
                     INamedTypeSymbol nts when Eqx(nts.ConstructedFrom, TypeValueTaskOf) => (nts.TypeArguments[0], AsyncReturnType.ValueTask),
+                    INamedTypeSymbol nts when Eqx(nts.ConstructedFrom, TypeAsyncEnumerableOf) => (nts.TypeArguments[0], AsyncReturnType.AsyncEnumerable),
                     var ts when Eqx(ts, TypeTask) => (tVoid, AsyncReturnType.Task),
                     var ts when Eqx(ts, TypeValueTask) => (tVoid, AsyncReturnType.ValueTask),
                     var ts => throw new InvalidOperationException($"Method {m} has unsupported return type.")
@@ -109,7 +110,7 @@ internal class ProtoInfoParser : ProtoParser
                     ProtoOutputType.Default when !noReturn => ProtoOutputType.Json,
                     var o => o
                 };
-                var sjaw = (opts?.SingleJsonParameterWrapping ?? match.SingleJsonParameterWrapping ?? ProtoSingleJsonParameterWrapping.DoNotWrap);
+                var sjaw = opts?.SingleJsonParameterWrapping ?? match.SingleJsonParameterWrapping ?? ProtoSingleJsonParameterWrapping.DoNotWrap;
 
                 // var path = '/' + rootPath.Trim('/') + '/' + (opts?.Path ?? ((opts?.Naming ?? match.Naming) switch
                 // {

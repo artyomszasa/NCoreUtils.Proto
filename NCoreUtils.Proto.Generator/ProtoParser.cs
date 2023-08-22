@@ -23,6 +23,8 @@ internal abstract class ProtoParser
 
     protected ITypeSymbol TypeValueTaskOf { get; }
 
+    protected ITypeSymbol TypeAsyncEnumerableOf { get; }
+
     protected Compilation Compilation => SemanticModel.Compilation;
 
     protected ProtoParser(SemanticModel semanticModel)
@@ -33,6 +35,9 @@ internal abstract class ProtoParser
         TypeValueTask = GetTypeSymbolForType(typeof(ValueTask));
         TypeTaskOf = ((INamedTypeSymbol)GetTypeSymbolForType(typeof(Task<int>))).ConstructedFrom;
         TypeValueTaskOf = ((INamedTypeSymbol)GetTypeSymbolForType(typeof(ValueTask<int>))).ConstructedFrom;
+        // TypeAsyncEnumerableOf = ((INamedTypeSymbol)GetTypeSymbolForType(typeof(IAsyncEnumerable<int>))).ConstructedFrom;
+        TypeAsyncEnumerableOf = Compilation.GetTypeByMetadataName("System.Collections.Generic.IAsyncEnumerable`1")
+            ?? throw new InvalidOperationException("Unable to get type symbol of System.Collections.Generic.IAsyncEnumerable`1");
     }
 
     protected ITypeSymbol? GetTypeSymbolForTypeOrNull(Type type)

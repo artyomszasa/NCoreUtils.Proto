@@ -90,7 +90,22 @@ internal class ProtoClientEmitter
             requestVar = $"request{++requestVarSeed}";
         }
         var ctoken = desc.UsesCancellation ? "cancellationToken" : "global::System.Threading.CancellationToken.None";
-        return @$"public virtual async {desc.ReturnType} {desc.MethodName}({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))}{(desc.UsesCancellation ? (desc.Parameters.Count > 0 ? ", " : string.Empty) + "global::System.Threading.CancellationToken cancellationToken" : string.Empty)})
+        var baseArguments = string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"));
+        if (desc.AsyncReturnType == AsyncReturnType.AsyncEnumerable)
+        {
+            return @$"public virtual async {desc.ReturnType} {desc.MethodName}({baseArguments}{(desc.UsesCancellation ? (desc.Parameters.Count > 0 ? ", " : string.Empty) + "[EnumeratorCancellation] global::System.Threading.CancellationToken cancellationToken" : string.Empty)})
+    {{
+        var {requestVar} = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
+        using var client = CreateHttpClient();
+        using var response = await client.SendAsync({requestVar}, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
+        await HandleErrors(response, {ctoken});
+        await foreach (var item in Read{desc.MethodId}Response(response, {ctoken}))
+        {{
+            yield return item;
+        }}
+    }}";
+        }
+        return @$"public virtual async {desc.ReturnType} {desc.MethodName}({baseArguments}{(desc.UsesCancellation ? (desc.Parameters.Count > 0 ? ", " : string.Empty) + "global::System.Threading.CancellationToken cancellationToken" : string.Empty)})
     {{
         var {requestVar} = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
         using var client = CreateHttpClient();
