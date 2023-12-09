@@ -13,11 +13,14 @@ public class ParameterDescriptor
 
     public string TypeName { get; }
 
-    public ParameterDescriptor(string name, string key, ITypeSymbol type, string typeName)
+    public ITypeSymbol? ConverterType { get; }
+
+    public ParameterDescriptor(string name, string key, ITypeSymbol type, string typeName, ITypeSymbol? converterType)
     {
         Name = name;
         Key = key;
         Type = type ?? throw new ArgumentNullException(nameof(type));
         TypeName = typeName;
+        ConverterType = converterType;
     }
 }

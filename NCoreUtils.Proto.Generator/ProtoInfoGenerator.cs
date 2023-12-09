@@ -64,6 +64,17 @@ public class ProtoMethodInfoAttribute : System.Attribute
     public ProtoMethodInfoAttribute(string methodName)
         => MethodName = methodName ?? throw new System.ArgumentNullException(nameof(methodName));
 }
+
+
+[System.AttributeUsage(System.AttributeTargets.Parameter | System.AttributeTargets.ReturnValue, AllowMultiple = false)]
+public class ProtoJsonConverterAttribute : System.Attribute
+{
+    public System.Type ConverterType { get; }
+
+    public ProtoJsonConverterAttribute(System.Type converterType)
+        => ConverterType = converterType;
+}
+
 }";
 
     private static UTF8Encoding Utf8 { get; } = new(false);

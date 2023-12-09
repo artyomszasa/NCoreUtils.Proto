@@ -1,6 +1,7 @@
 using System;
 using System.Linq;
 using System.Runtime.InteropServices;
+using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
@@ -48,13 +49,23 @@ internal class ProtoInfoEmitter
         }
         return @$"public class {desc.InputDtoTypeName}
 {{
-    {string.Join(NewLine + "    ", desc.Parameters.Select(e => $"public {e.TypeName} {e.Name} {{ get; }}"))}
+    {string.Join(NewLine + "    ", desc.Parameters.Select(EmitProperty))}
 
     public {desc.InputDtoTypeName}({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))})
     {{
         {string.Join(NewLine + "        ", desc.Parameters.Select(e => $"this.{e.Name} = {e.Name};"))}
     }}
 }};";
+
+        static string EmitProperty(ParameterDescriptor e)
+        {
+            if (e.ConverterType is null)
+            {
+                return $"public {e.TypeName} {e.Name} {{ get; }}";
+            }
+            return @$"[System.Text.Json.Serialization.JsonConverterAttribute(typeof({e.ConverterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}))]
+    public {e.TypeName} {e.Name} {{ get; }}";
+        }
     }
 
     private string EmitRootSerializationClass(string name)

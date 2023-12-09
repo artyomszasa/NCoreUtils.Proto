@@ -50,7 +50,7 @@ public abstract class ProtoClientBase
                 .ConfigureAwait(false);
             if (error is null)
             {
-                throw new ProtoException("generic_error", $"Remote server responded with {response.StatusCode} without content.");
+                throw new ProtoException("generic_error", $"Remote server responded with {response.StatusCode} without content [{response.RequestMessage?.RequestUri}].");
             }
             throw new ProtoException(
                 string.IsNullOrEmpty(error.ErrorCode) ? "generic_error" : error.ErrorCode,
@@ -63,7 +63,7 @@ public abstract class ProtoClientBase
             {
                 throw;
             }
-            throw new ProtoException("generic_error", "Unable to read error response.", exn);
+            throw new ProtoException("generic_error", $"Unable to read error response [{response.RequestMessage?.RequestUri}].", exn);
         }
     }
 }

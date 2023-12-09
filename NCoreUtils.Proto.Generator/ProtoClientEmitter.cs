@@ -162,7 +162,7 @@ public partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.In
     public {name}({name}Configuration configuration, global::System.Net.Http.IHttpClientFactory httpClientFactory)
         : base(configuration, httpClientFactory)
     {{
-        if (!string.IsNullOrEmpty(configuration.Path))
+        if (!(configuration.Path is null))
         {{
             ServicePath = configuration.Path.Trim('/');
         }}

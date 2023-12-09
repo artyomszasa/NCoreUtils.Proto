@@ -82,6 +82,18 @@ internal abstract class ProtoParser
             }
             else
             {
+                ITypeSymbol? converterType = null;
+                var arg0 = p.GetAttributes()
+                    .FirstOrDefault(attr => attr.AttributeClass?.Name == "ProtoJsonConverterAttribute")
+                    ?.ConstructorArguments.FirstOrDefault();
+                if (arg0 is TypedConstant arg)
+                {
+                    if (arg.Value is not INamedTypeSymbol ctype)
+                    {
+                        throw new InvalidOperationException($"converterValue.Value is {arg.Value?.GetType()}");
+                    }
+                    converterType = ctype;
+                }
                 parameters.Add(new ParameterDescriptor(
                     name: p.Name,
                     key: naming switch
@@ -94,7 +106,8 @@ internal abstract class ProtoParser
 
                     },
                     type: p.Type,
-                    typeName: p.Type.ToFullMaybeNullableName()
+                    typeName: p.Type.ToFullMaybeNullableName(),
+                    converterType: converterType
                 ));
             }
         }
