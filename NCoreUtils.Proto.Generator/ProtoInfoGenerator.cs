@@ -16,7 +16,7 @@ public class ProtoInfoGenerator : IIncrementalGenerator
 namespace NCoreUtils.Proto
 {
 [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = false)]
-public class ProtoInfoAttribute : System.Attribute
+internal class ProtoInfoAttribute : System.Attribute
 {
     public System.Type Target { get; }
 
@@ -41,7 +41,7 @@ public class ProtoInfoAttribute : System.Attribute
 }
 
 [System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
-public class ProtoMethodInfoAttribute : System.Attribute
+internal class ProtoMethodInfoAttribute : System.Attribute
 {
     public string MethodName { get; }
 
@@ -67,7 +67,7 @@ public class ProtoMethodInfoAttribute : System.Attribute
 
 
 [System.AttributeUsage(System.AttributeTargets.Parameter | System.AttributeTargets.ReturnValue, AllowMultiple = false)]
-public class ProtoJsonConverterAttribute : System.Attribute
+internal class ProtoJsonConverterAttribute : System.Attribute
 {
     public System.Type ConverterType { get; }
 
