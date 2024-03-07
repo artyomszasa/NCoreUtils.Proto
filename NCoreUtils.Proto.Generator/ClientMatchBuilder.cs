@@ -6,14 +6,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
-public class ClientMatchBuilder
+public class ClientMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds)
 {
     public static IReadOnlyDictionary<string, MethodGenerationOptions> NoMethodOptions { get; }
         = new Dictionary<string, MethodGenerationOptions>();
 
-    public SemanticModel SemanticModel { get; }
+    public SemanticModel SemanticModel { get; } = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
 
-    public ClassDeclarationSyntax Cds { get; }
+    public ClassDeclarationSyntax Cds { get; } = cds ?? throw new ArgumentNullException(nameof(cds));
 
     public ITypeSymbol? TargetType { get; set; }
 
@@ -34,16 +34,10 @@ public class ClientMatchBuilder
     private Dictionary<string, MethodGenerationOptions>? _methodOptions;
 
     public Dictionary<string, MethodGenerationOptions> MethodOptions
-        => _methodOptions ??= new();
+        => _methodOptions ??= [];
 
     [MemberNotNullWhen(true, nameof(TargetType))]
     public bool IsValid => TargetType is not null;
-
-    public ClientMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds)
-    {
-        SemanticModel = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
-        Cds = cds ?? throw new ArgumentNullException(nameof(cds));
-    }
 
     public ClientMatch Build() => IsValid
         ? new ClientMatch(SemanticModel, Cds, TargetType, Input, Output, Error, Naming, KeepAsyncSuffix, Path, HttpClientConfiguration, _methodOptions ?? NoMethodOptions)

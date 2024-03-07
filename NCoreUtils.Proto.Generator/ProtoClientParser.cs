@@ -2,12 +2,8 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoClientParser : ProtoConsumerParser
+internal class ProtoClientParser(SemanticModel semanticModel) : ProtoConsumerParser(semanticModel)
 {
-    public ProtoClientParser(SemanticModel semanticModel)
-        : base(semanticModel)
-    { }
-
     public ProtoClientInfo Parse(ProtoClientMatch match)
     {
         var service = ParseInfoType(match.InfoType, match.Path);

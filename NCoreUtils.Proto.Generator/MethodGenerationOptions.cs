@@ -2,45 +2,32 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-public class MethodGenerationOptions
+public class MethodGenerationOptions(
+    IMethodSymbol method,
+    ProtoInputType? input,
+    ProtoOutputType? output,
+    ProtoErrorType? error,
+    ProtoNaming? naming,
+    ProtoNaming? parameterNaming,
+    ProtoSingleJsonParameterWrapping? singleJsonParameterWrapping,
+    bool? keepAsyncSuffix,
+    string? path)
 {
-    public IMethodSymbol Method { get; }
+    public IMethodSymbol Method { get; } = method;
 
-    public ProtoInputType? Input { get; }
+    public ProtoInputType? Input { get; } = input;
 
-    public ProtoOutputType? Output { get; }
+    public ProtoOutputType? Output { get; } = output;
 
-    public ProtoErrorType? Error { get; }
+    public ProtoErrorType? Error { get; } = error;
 
-    public ProtoNaming? Naming { get; }
+    public ProtoNaming? Naming { get; } = naming;
 
-    public ProtoNaming? ParameterNaming { get; }
+    public ProtoNaming? ParameterNaming { get; } = parameterNaming;
 
-    public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; }
+    public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; } = singleJsonParameterWrapping;
 
-    public bool? KeepAsyncSuffix { get; }
+    public bool? KeepAsyncSuffix { get; } = keepAsyncSuffix;
 
-    public string? Path { get; }
-
-    public MethodGenerationOptions(
-        IMethodSymbol method,
-        ProtoInputType? input,
-        ProtoOutputType? output,
-        ProtoErrorType? error,
-        ProtoNaming? naming,
-        ProtoNaming? parameterNaming,
-        ProtoSingleJsonParameterWrapping? singleJsonParameterWrapping,
-        bool? keepAsyncSuffix,
-        string? path)
-    {
-        Method = method;
-        Input = input;
-        Output = output;
-        Error = error;
-        Naming = naming;
-        ParameterNaming = parameterNaming;
-        SingleJsonParameterWrapping = singleJsonParameterWrapping;
-        KeepAsyncSuffix = keepAsyncSuffix;
-        Path = path;
-    }
+    public string? Path { get; } = path;
 }

@@ -5,16 +5,13 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoInfoEmitter
+internal class ProtoInfoEmitter(ProtoServiceInfo info)
 {
     private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         ? "\r\n"
         : "\n";
 
-    private ProtoServiceInfo Info { get; }
-
-    public ProtoInfoEmitter(ProtoServiceInfo info)
-        => Info = info ?? throw new ArgumentNullException(nameof(info));
+    private ProtoServiceInfo Info { get; } = info ?? throw new ArgumentNullException(nameof(info));
 
     private string EmitMethodInfo(MethodDescriptor desc)
         => @$"public sealed class {desc.MethodId}Info

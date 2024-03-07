@@ -1,14 +1,11 @@
 using System;
 using System.Buffers;
-using System.Collections.Generic;
 using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoInfoParser : ProtoParser
+internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semanticModel)
 {
     private static DiagnosticDescriptor PropertyNotSupportedDescriptor { get; } = new DiagnosticDescriptor(
         id: "PROTO0001",
@@ -50,10 +47,6 @@ internal class ProtoInfoParser : ProtoParser
             ArrayPool<char>.Shared.Return(buffer, false);
         }
     }
-
-    public ProtoInfoParser(SemanticModel semanticModel)
-        : base(semanticModel)
-    { }
 
     public ProtoServiceInfo ParseInfo(SourceProductionContext context, ProtoInfoMatch match)
     {

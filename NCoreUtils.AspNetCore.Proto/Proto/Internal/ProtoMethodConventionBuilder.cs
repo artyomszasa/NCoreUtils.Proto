@@ -4,17 +4,11 @@ using NCoreUtils.AspNetCore;
 
 namespace NCoreUtils.Proto.Internal;
 
-internal sealed class ProtoMethodConventionBuilder<TMethods> : IEndpointConventionBuilder
+internal sealed class ProtoMethodConventionBuilder<TMethods>(IProtoEndpointsConventionBuilder<TMethods> builder, TMethods method) : IEndpointConventionBuilder
 {
-    private IProtoEndpointsConventionBuilder<TMethods> Builder { get; }
+    private IProtoEndpointsConventionBuilder<TMethods> Builder { get; } = builder ?? throw new ArgumentNullException(nameof(builder));
 
-    private TMethods Method { get; }
-
-    public ProtoMethodConventionBuilder(IProtoEndpointsConventionBuilder<TMethods> builder, TMethods method)
-    {
-        Builder = builder ?? throw new ArgumentNullException(nameof(builder));
-        Method = method;
-    }
+    private TMethods Method { get; } = method;
 
     public void Add(Action<EndpointBuilder> convention)
         => Builder.Add(Method, convention);

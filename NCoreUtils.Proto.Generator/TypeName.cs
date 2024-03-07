@@ -6,36 +6,26 @@ namespace NCoreUtils.Proto;
 
 public abstract class TypeName
 {
-    public sealed class GenerationTimeTypeName : TypeName
+    public sealed class GenerationTimeTypeName(string fullName) : TypeName
     {
-        private readonly string _fullName;
+        private readonly string _fullName = fullName;
 
         public override bool IsNullableReference => _fullName.EndsWith("?");
 
         public override string FullName => _fullName;
 
         public override string JsonContextName => throw new NotSupportedException();
-
-        public GenerationTimeTypeName(string fullName)
-        {
-            _fullName = fullName;
-        }
     }
 
-    public sealed class DefinedTypeName : TypeName
+    public sealed class DefinedTypeName(ITypeSymbol type) : TypeName
     {
-        public ITypeSymbol Type { get; }
+        public ITypeSymbol Type { get; } = type;
 
         public override bool IsNullableReference => Type.NullableAnnotation == NullableAnnotation.Annotated;
 
         public override string FullName => Type.ToFullMaybeNullableName();
 
         public override string JsonContextName => GetTypeInfoPropertyName(Type);
-
-        public DefinedTypeName(ITypeSymbol type)
-        {
-            Type = type;
-        }
     }
 
     // see https://github.com/dotnet/runtime/blob/9b1da975a3a028ae22ce7ffb4ca838dfe34aac59/src/libraries/System.Text.Json/gen/Reflection/TypeExtensions.cs#L58

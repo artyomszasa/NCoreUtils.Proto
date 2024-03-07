@@ -4,33 +4,23 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
-public class ProtoClientMatch
+public class ProtoClientMatch(
+    SemanticModel semanticModel,
+    ClassDeclarationSyntax cds,
+    ITypeSymbol infoType,
+    ITypeSymbol? jsonSerializerContext,
+    string? path,
+    IReadOnlyDictionary<string, string> methodPaths)
 {
-    public SemanticModel SemanticModel { get; }
+    public SemanticModel SemanticModel { get; } = semanticModel;
 
-    public ClassDeclarationSyntax Cds { get; }
+    public ClassDeclarationSyntax Cds { get; } = cds;
 
-    public ITypeSymbol InfoType { get; }
+    public ITypeSymbol InfoType { get; } = infoType;
 
-    public ITypeSymbol? JsonSerializerContext { get; }
+    public ITypeSymbol? JsonSerializerContext { get; } = jsonSerializerContext;
 
-    public string? Path { get; }
+    public string? Path { get; } = path;
 
-    public IReadOnlyDictionary<string, string> MethodPaths { get; }
-
-    public ProtoClientMatch(
-        SemanticModel semanticModel,
-        ClassDeclarationSyntax cds,
-        ITypeSymbol infoType,
-        ITypeSymbol? jsonSerializerContext,
-        string? path,
-        IReadOnlyDictionary<string, string> methodPaths)
-    {
-        SemanticModel = semanticModel;
-        Cds = cds;
-        InfoType = infoType;
-        JsonSerializerContext = jsonSerializerContext;
-        Path = path;
-        MethodPaths = methodPaths;
-    }
+    public IReadOnlyDictionary<string, string> MethodPaths { get; } = methodPaths;
 }

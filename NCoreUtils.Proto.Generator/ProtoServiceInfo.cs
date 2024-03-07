@@ -4,20 +4,13 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoServiceInfo
+internal class ProtoServiceInfo(ITypeSymbol target, string path, IReadOnlyList<MethodDescriptor> methods)
 {
-    public ITypeSymbol Target { get; }
+    public ITypeSymbol Target { get; } = target ?? throw new ArgumentNullException(nameof(target));
 
     public string TargetFullName => Target.ToFullMaybeNullableName();
 
-    public string Path { get; }
+    public string Path { get; } = path ?? throw new ArgumentNullException(nameof(path));
 
-    public IReadOnlyList<MethodDescriptor> Methods { get; }
-
-    public ProtoServiceInfo(ITypeSymbol target, string path, IReadOnlyList<MethodDescriptor> methods)
-    {
-        Target = target ?? throw new ArgumentNullException(nameof(target));
-        Path = path ?? throw new ArgumentNullException(nameof(path));
-        Methods = methods ?? throw new ArgumentNullException(nameof(methods));
-    }
+    public IReadOnlyList<MethodDescriptor> Methods { get; } = methods ?? throw new ArgumentNullException(nameof(methods));
 }

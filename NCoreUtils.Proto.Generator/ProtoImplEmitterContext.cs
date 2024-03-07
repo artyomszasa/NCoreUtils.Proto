@@ -3,11 +3,11 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-public sealed class ProtoImplEmitterContext
+public sealed class ProtoImplEmitterContext(SemanticModel semanticModel)
 {
     private static SymbolEqualityComparer Eq { get; } = SymbolEqualityComparer.Default;
 
-    private SemanticModel SemanticModel { get; }
+    private SemanticModel SemanticModel { get; } = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
 
     private ITypeSymbol? _cancellationTokenSymbol;
 
@@ -26,11 +26,6 @@ public sealed class ProtoImplEmitterContext
     private ITypeSymbol HttpContextSymbol
         => _httpContextSymbol ??= SemanticModel.Compilation.GetTypeByMetadataName("Microsoft.AspNetCore.Http.HttpContext")
             ?? throw new InvalidOperationException("Cannot get type symbol for Microsoft.AspNetCore.Http.HttpContext.");
-
-    public ProtoImplEmitterContext(SemanticModel semanticModel)
-    {
-        SemanticModel = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
-    }
 
     public bool IsCancellationToken(ITypeSymbol symbol)
         => Eq.Equals(symbol, CancellationTokenSymbol);

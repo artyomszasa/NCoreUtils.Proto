@@ -2,73 +2,53 @@ using System.Collections.Generic;
 
 namespace NCoreUtils.Proto;
 
-internal class MethodDescriptor
+internal class MethodDescriptor(
+    string returnType,
+    TypeName returnValueType,
+    bool noReturn,
+    AsyncReturnType asyncReturnType,
+    string methodName,
+    string methodId,
+    IReadOnlyList<ParameterDescriptor> parameters,
+    bool usesCancellation,
+    string path,
+    string verb,
+    ProtoInputType input,
+    ProtoOutputType output,
+    ProtoErrorType error,
+    ProtoNaming? parameterNaming,
+    ProtoSingleJsonParameterWrapping singleJsonParameterWrapping,
+    TypeName? inputDtoTypeName)
 {
-    public string ReturnType { get; }
+    public string ReturnType { get; } = returnType;
 
-    public TypeName ReturnValueType { get; }
+    public TypeName ReturnValueType { get; } = returnValueType;
 
-    public bool NoReturn { get; }
+    public bool NoReturn { get; } = noReturn;
 
-    public AsyncReturnType AsyncReturnType { get; }
+    public AsyncReturnType AsyncReturnType { get; } = asyncReturnType;
 
-    public string MethodName { get; }
+    public string MethodName { get; } = methodName;
 
-    public string MethodId { get; }
+    public string MethodId { get; } = methodId;
 
-    public IReadOnlyList<ParameterDescriptor> Parameters { get; }
+    public IReadOnlyList<ParameterDescriptor> Parameters { get; } = parameters;
 
-    public bool UsesCancellation { get; }
+    public bool UsesCancellation { get; } = usesCancellation;
 
-    public string Path { get; }
+    public string Path { get; } = path;
 
-    public string Verb { get; }
+    public string Verb { get; } = verb;
 
-    public ProtoInputType Input { get; }
+    public ProtoInputType Input { get; } = input;
 
-    public ProtoOutputType Output { get; }
+    public ProtoOutputType Output { get; } = output;
 
-    public ProtoErrorType Error { get; }
+    public ProtoErrorType Error { get; } = error;
 
-    public ProtoNaming? ParameterNaming { get; }
+    public ProtoNaming? ParameterNaming { get; } = parameterNaming;
 
-    public ProtoSingleJsonParameterWrapping SingleJsonParameterWrapping { get; }
+    public ProtoSingleJsonParameterWrapping SingleJsonParameterWrapping { get; } = singleJsonParameterWrapping;
 
-    public TypeName? InputDtoTypeName { get; }
-
-    public MethodDescriptor(
-        string returnType,
-        TypeName returnValueType,
-        bool noReturn,
-        AsyncReturnType asyncReturnType,
-        string methodName,
-        string methodId,
-        IReadOnlyList<ParameterDescriptor> parameters,
-        bool usesCancellation,
-        string path,
-        string verb,
-        ProtoInputType input,
-        ProtoOutputType output,
-        ProtoErrorType error,
-        ProtoNaming? parameterNaming,
-        ProtoSingleJsonParameterWrapping singleJsonParameterWrapping,
-        TypeName? inputDtoTypeName)
-    {
-        ReturnType = returnType;
-        ReturnValueType = returnValueType;
-        NoReturn = noReturn;
-        AsyncReturnType = asyncReturnType;
-        MethodName = methodName;
-        MethodId = methodId;
-        Parameters = parameters;
-        UsesCancellation = usesCancellation;
-        Path = path;
-        Verb = verb;
-        Input = input;
-        Output = output;
-        Error = error;
-        ParameterNaming = parameterNaming;
-        SingleJsonParameterWrapping = singleJsonParameterWrapping;
-        InputDtoTypeName = inputDtoTypeName;
-    }
+    public TypeName? InputDtoTypeName { get; } = inputDtoTypeName;
 }

@@ -3,26 +3,17 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ClientDescriptor
+internal class ClientDescriptor(string @namespace, string name, ITypeSymbol target, IReadOnlyList<MethodDescriptor> methods, string httpClientConfiguration)
 {
-    public string Namespace { get; }
+    public string Namespace { get; } = @namespace;
 
-    public string Name { get; }
+    public string Name { get; } = name;
 
-    public ITypeSymbol Target { get; }
+    public ITypeSymbol Target { get; } = target;
 
     public string TargetFullName => Target.ToFullMaybeNullableName();
 
-    public IReadOnlyList<MethodDescriptor> Methods { get; }
+    public IReadOnlyList<MethodDescriptor> Methods { get; } = methods;
 
-    public string HttpClientConfiguration { get; }
-
-    public ClientDescriptor(string @namespace, string name, ITypeSymbol target, IReadOnlyList<MethodDescriptor> methods, string httpClientConfiguration)
-    {
-        Namespace = @namespace;
-        Name = name;
-        Target = target;
-        Methods = methods;
-        HttpClientConfiguration = httpClientConfiguration;
-    }
+    public string HttpClientConfiguration { get; } = httpClientConfiguration;
 }

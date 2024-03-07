@@ -5,18 +5,13 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoClientEmitter
+internal class ProtoClientEmitter(ProtoClientInfo info)
 {
     private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         ? "\r\n"
         : "\n";
 
-    private ProtoClientInfo Info { get; }
-
-    public ProtoClientEmitter(ProtoClientInfo info)
-    {
-        Info = info;
-    }
+    private ProtoClientInfo Info { get; } = info;
 
     private string EmitCreateJsonContentMethod(MethodDescriptor desc)
         => desc.SingleJsonParameterWrapping switch

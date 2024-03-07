@@ -8,21 +8,15 @@ using NCoreUtils.Proto.Internal;
 
 namespace NCoreUtils.Proto;
 
-public abstract class ProtoClientBase
+public abstract class ProtoClientBase(IEndpointConfiguration configuration, IHttpClientFactory httpClientFactory)
 {
-    protected IEndpointConfiguration Configuration { get; }
+    protected IEndpointConfiguration Configuration { get; } = configuration;
 
-    protected IHttpClientFactory HttpClientFactory { get; }
+    protected IHttpClientFactory HttpClientFactory { get; } = httpClientFactory;
 
     protected abstract string HttpClientConfiguration { get; }
 
     protected virtual MediaTypeHeaderValue? JsonMediaType => default;
-
-    protected ProtoClientBase(IEndpointConfiguration configuration, IHttpClientFactory httpClientFactory)
-    {
-        Configuration = configuration;
-        HttpClientFactory = httpClientFactory;
-    }
 
     protected virtual string StringifyArgument(string value)
         => value;
@@ -47,11 +41,8 @@ public abstract class ProtoClientBase
         {
             var error = await response.Content
                 .ReadFromJsonAsync(ErrorDescriptorSerializerContext.Default.ErrorDescriptor, cancellationToken)
-                .ConfigureAwait(false);
-            if (error is null)
-            {
-                throw new ProtoException("generic_error", $"Remote server responded with {response.StatusCode} without content [{response.RequestMessage?.RequestUri}].");
-            }
+                .ConfigureAwait(false)
+                ?? throw new ProtoException("generic_error", $"Remote server responded with {response.StatusCode} without content [{response.RequestMessage?.RequestUri}].");
             throw new ProtoException(
                 string.IsNullOrEmpty(error.ErrorCode) ? "generic_error" : error.ErrorCode,
                 error.ErrorDescription ?? $"Remote server responded with {response.StatusCode}."

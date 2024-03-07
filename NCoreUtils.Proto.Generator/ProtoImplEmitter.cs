@@ -6,21 +6,15 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoImplEmitter
+internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext context)
 {
     private static string NewLine { get; } = RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
         ? "\r\n"
         : "\n";
 
-    private ProtoImplInfo Info { get; }
+    private ProtoImplInfo Info { get; } = info ?? throw new ArgumentNullException(nameof(info));
 
-    private ProtoImplEmitterContext Context { get; }
-
-    public ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext context)
-    {
-        Info = info ?? throw new ArgumentNullException(nameof(info));
-        Context = context ?? throw new ArgumentNullException(nameof(context));
-    }
+    private ProtoImplEmitterContext Context { get; } = context ?? throw new ArgumentNullException(nameof(context));
 
     private static string EmitReadArgumentMethod(ITypeSymbol? implType, ParameterDescriptor p)
     {

@@ -3,10 +3,8 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal abstract class ProtoConsumerParser : ProtoParser
+internal abstract class ProtoConsumerParser(SemanticModel semanticModel) : ProtoParser(semanticModel)
 {
-    protected ProtoConsumerParser(SemanticModel semanticModel) : base(semanticModel) { }
-
     protected ProtoServiceInfo ParseInfoType(ITypeSymbol infoType, string? path)
     {
         var interfaceType = infoType.BaseType?.TypeArguments[0] ?? throw new ProtoClientInvalidInfoException($"No interface type defined for {infoType.Name}");

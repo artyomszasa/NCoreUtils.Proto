@@ -4,37 +4,26 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
-public class ProtoImplMatch
+public class ProtoImplMatch(
+    SemanticModel semanticModel,
+    ClassDeclarationSyntax cds,
+    ITypeSymbol infoType,
+    ITypeSymbol? jsonSerializerContext,
+    string? path,
+    IReadOnlyDictionary<string, string> methodPaths,
+    ITypeSymbol? implementationFactory)
 {
-    public SemanticModel SemanticModel { get; }
+    public SemanticModel SemanticModel { get; } = semanticModel;
 
-    public ClassDeclarationSyntax Cds { get; }
+    public ClassDeclarationSyntax Cds { get; } = cds;
 
-    public ITypeSymbol InfoType { get; }
+    public ITypeSymbol InfoType { get; } = infoType;
 
-    public ITypeSymbol? JsonSerializerContext { get; }
+    public ITypeSymbol? JsonSerializerContext { get; } = jsonSerializerContext;
 
-    public string? Path { get; }
+    public string? Path { get; } = path;
 
-    public IReadOnlyDictionary<string, string> MethodPaths { get; }
+    public IReadOnlyDictionary<string, string> MethodPaths { get; } = methodPaths;
 
-    public ITypeSymbol? ImplementationFactory { get; }
-
-    public ProtoImplMatch(
-        SemanticModel semanticModel,
-        ClassDeclarationSyntax cds,
-        ITypeSymbol infoType,
-        ITypeSymbol? jsonSerializerContext,
-        string? path,
-        IReadOnlyDictionary<string, string> methodPaths,
-        ITypeSymbol? implementationFactory)
-    {
-        SemanticModel = semanticModel;
-        Cds = cds;
-        InfoType = infoType;
-        JsonSerializerContext = jsonSerializerContext;
-        Path = path;
-        MethodPaths = methodPaths;
-        ImplementationFactory = implementationFactory;
-    }
+    public ITypeSymbol? ImplementationFactory { get; } = implementationFactory;
 }

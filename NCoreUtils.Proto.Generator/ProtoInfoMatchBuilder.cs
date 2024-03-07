@@ -6,14 +6,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
-public class ProtoInfoMatchBuilder
+public class ProtoInfoMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds)
 {
     public static IReadOnlyDictionary<string, MethodGenerationOptions> NoMethodOptions { get; }
         = new Dictionary<string, MethodGenerationOptions>();
 
-    public SemanticModel SemanticModel { get; }
+    public SemanticModel SemanticModel { get; } = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
 
-    public ClassDeclarationSyntax Cds { get; }
+    public ClassDeclarationSyntax Cds { get; } = cds ?? throw new ArgumentNullException(nameof(cds));
 
     public ITypeSymbol? TargetType { get; set; }
 
@@ -36,16 +36,10 @@ public class ProtoInfoMatchBuilder
     private Dictionary<string, MethodGenerationOptions>? _methodOptions;
 
     public Dictionary<string, MethodGenerationOptions> MethodOptions
-        => _methodOptions ??= new();
+        => _methodOptions ??= [];
 
     [MemberNotNullWhen(true, nameof(TargetType))]
     public bool IsValid => TargetType is not null;
-
-    public ProtoInfoMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds)
-    {
-        SemanticModel = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
-        Cds = cds ?? throw new ArgumentNullException(nameof(cds));
-    }
 
     public ProtoInfoMatch Build() => IsValid
         ? new ProtoInfoMatch(

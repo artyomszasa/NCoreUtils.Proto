@@ -2,33 +2,24 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoImplInfo
+internal class ProtoImplInfo(
+    ITypeSymbol implType,
+    ITypeSymbol infoType,
+    ITypeSymbol? jsonSerializerContextType,
+    ITypeSymbol? implementationFactory,
+    ProtoServiceInfo service)
 {
-    public ITypeSymbol ImplType { get; }
+    public ITypeSymbol ImplType { get; } = implType;
 
     public ITypeSymbol InterfaceType => Service.Target;
 
     public string InterfaceFullName => InterfaceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
 
-    public ITypeSymbol InfoType { get; }
+    public ITypeSymbol InfoType { get; } = infoType;
 
-    public ITypeSymbol? JsonSerializerContextType { get; }
+    public ITypeSymbol? JsonSerializerContextType { get; } = jsonSerializerContextType;
 
-    public ITypeSymbol? ImplementationFactory { get; }
+    public ITypeSymbol? ImplementationFactory { get; } = implementationFactory;
 
-    public ProtoServiceInfo Service { get; }
-
-    public ProtoImplInfo(
-        ITypeSymbol implType,
-        ITypeSymbol infoType,
-        ITypeSymbol? jsonSerializerContextType,
-        ITypeSymbol? implementationFactory,
-        ProtoServiceInfo service)
-    {
-        ImplType = implType;
-        InfoType = infoType;
-        JsonSerializerContextType = jsonSerializerContextType;
-        ImplementationFactory = implementationFactory;
-        Service = service;
-    }
+    public ProtoServiceInfo Service { get; } = service;
 }
