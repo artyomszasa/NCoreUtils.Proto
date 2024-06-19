@@ -13,6 +13,19 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
 
     private ProtoClientInfo Info { get; } = info;
 
+    private string GetReadResponseMethodName(MethodDescriptor desc)
+        => $"Read{desc.MethodId}Response";
+
+    private bool ShouldDisposeResponse(MethodDescriptor desc)
+    {
+        var methodName = GetReadResponseMethodName(desc);
+        return
+            !(Info.ClientType
+                .GetMembers()
+                .TryChooseFirst(methodName, static (mem, name) => mem is IMethodSymbol m && m.Name == name ? m.Choose() : default, out var method)
+            && method.GetAttributes().Any(static attr => attr.AttributeClass?.Name == "HandlesResponseDisposalAttribute"));
+    }
+
     private string EmitCreateJsonContentMethod(MethodDescriptor desc)
         => desc.SingleJsonParameterWrapping switch
         {
@@ -68,7 +81,7 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
     private string EmitReadResponseMethod(MethodDescriptor desc)
         => desc.NoReturn ? string.Empty : desc.Output switch
         {
-            ProtoOutputType.Json => @$"protected virtual {desc.ReturnType} Read{desc.MethodId}Response(global::System.Net.Http.HttpResponseMessage response, global::System.Threading.CancellationToken cancellationToken)
+            ProtoOutputType.Json => @$"protected virtual {desc.ReturnType} {GetReadResponseMethodName(desc)}(global::System.Net.Http.HttpResponseMessage response, global::System.Threading.CancellationToken cancellationToken)
     {{
         return {(desc.AsyncReturnType == AsyncReturnType.ValueTask ? $"new {desc.ReturnType}(" : string.Empty)}global::System.Net.Http.Json.HttpContentJsonExtensions.ReadFromJsonAsync(response.Content, {Info.JsonSerializerContextType!.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}.Default.{desc.ReturnValueType.JsonContextName}, cancellationToken)!{(desc.AsyncReturnType == AsyncReturnType.ValueTask ? $")" : string.Empty)};
     }}",
@@ -89,10 +102,15 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
     {{
         var {requestVar} = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
         using var client = CreateHttpClient();
-        using var response = await client.SendAsync({requestVar}, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
+        {(ShouldDisposeResponse(desc) ? "using " : string.Empty)}var response = await client.SendAsync({requestVar}, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
         await HandleErrors(response, {ctoken});
         {(desc.NoReturn ? string.Empty : $"return await Read{desc.MethodId}Response(response, {ctoken});")}
     }}";
+    }
+
+    private static string EmitDefaultShouldDisposeRequestMethod()
+    {
+        return "private static bool ShouldDisposeRequest(Method method) => true;";
     }
 
     public string EmitClient(string @namespace, string name)

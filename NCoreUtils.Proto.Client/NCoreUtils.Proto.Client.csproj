@@ -1,11 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net8.0;net7.0;net6.0;netstandard2.1</TargetFrameworks>
+    <TargetFrameworks>net8.0;net7.0;net6.0;netstandard2.1;net48</TargetFrameworks>
+    <RootNamespace>NCoreUtils.Proto</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\NCoreUtils.Proto.Shared\NCoreUtils.Proto.Shared.csproj" />
   </ItemGroup>
-  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'netstandard2.1' ">
+  <ItemGroup Condition=" '$(TargetFramework)' == 'net6.0' Or '$(TargetFramework)' == 'netstandard2.1' Or '$(TargetFramework)' == 'net48' ">
     <PackageReference Include="Microsoft.Extensions.Http" Version="6.0.0" />
     <PackageReference Include="System.Net.Http.Json" Version="6.0.0" />
   </ItemGroup>

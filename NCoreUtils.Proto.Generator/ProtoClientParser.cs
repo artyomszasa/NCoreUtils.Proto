@@ -8,6 +8,7 @@ internal class ProtoClientParser(SemanticModel semanticModel) : ProtoConsumerPar
     {
         var service = ParseInfoType(match.InfoType, match.Path);
         return new ProtoClientInfo(
+            clientType: match.ClientType,
             infoType: match.InfoType,
             jsonSerializerContextType: match.JsonSerializerContext,
             service: service,

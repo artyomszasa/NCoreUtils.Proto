@@ -10,7 +10,7 @@ namespace NCoreUtils.Proto.Internal;
 
 public static class ProtoJsonContent
 {
-    public static ProtoJsonContent<T> Create<T>(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType)
+    public static ProtoJsonContent<T> Create<T>(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType = default)
         => new(value, typeInfo, mediaType);
 }
 
@@ -22,7 +22,7 @@ public class ProtoJsonContent<T> : HttpContent
 
     public T Value { get; }
 
-    public ProtoJsonContent(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType)
+    public ProtoJsonContent(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType = default)
     {
         TypeInfo = typeInfo;
         Value = value;

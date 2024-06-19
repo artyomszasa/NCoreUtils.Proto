@@ -2,8 +2,10 @@ using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoClientInfo(ITypeSymbol infoType, ITypeSymbol? jsonSerializerContextType, ProtoServiceInfo service, string httpClientConfiguration)
+internal class ProtoClientInfo(INamedTypeSymbol clientType, ITypeSymbol infoType, ITypeSymbol? jsonSerializerContextType, ProtoServiceInfo service, string httpClientConfiguration)
 {
+    public INamedTypeSymbol ClientType => clientType;
+
     public ITypeSymbol InterfaceType => Service.Target;
 
     public string InterfaceFullName => InterfaceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);

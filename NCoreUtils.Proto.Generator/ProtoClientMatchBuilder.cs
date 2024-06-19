@@ -6,11 +6,13 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
-public class ProtoClientMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds)
+public class ProtoClientMatchBuilder(SemanticModel semanticModel, ClassDeclarationSyntax cds, INamedTypeSymbol clientType)
 {
     private static IReadOnlyDictionary<string, string> NoMethodPaths { get; } = new Dictionary<string, string>();
 
     public SemanticModel SemanticModel { get; } = semanticModel ?? throw new ArgumentNullException(nameof(semanticModel));
+
+    public INamedTypeSymbol ClientType { get; } = clientType ?? throw new ArgumentNullException(nameof(clientType));
 
     public ClassDeclarationSyntax Cds { get; } = cds ?? throw new ArgumentNullException(nameof(cds));
 
@@ -30,6 +32,7 @@ public class ProtoClientMatchBuilder(SemanticModel semanticModel, ClassDeclarati
     public ProtoClientMatch Build() => new(
         SemanticModel,
         Cds,
+        ClientType,
         InfoType ?? throw new InvalidOperationException("Info type must be defined."),
         JsonSerializerContext,
         Path,

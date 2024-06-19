@@ -30,6 +30,13 @@ internal class ProtoClientAttribute : System.Attribute
         JsonSerializerContext = jsonSerializerContext ?? throw new System.ArgumentNullException(nameof(jsonSerializerContext));
     }
 }
+
+[System.AttributeUsage(System.AttributeTargets.Method, AllowMultiple = false)]
+internal class HandlesResponseDisposalAttribute : System.Attribute
+{
+    public HandlesResponseDisposalAttribute() { /* noop */ }
+}
+
 }";
 
     private static UTF8Encoding Utf8 { get; } = new(false);
@@ -62,7 +69,7 @@ internal class ProtoClientAttribute : System.Attribute
 
     private static ProtoClientMatch? GetTargetOrNull(GeneratorAttributeSyntaxContext ctx, CancellationToken cancellationToken)
     {
-        if (ctx.TargetNode is ClassDeclarationSyntax cds)
+        if (ctx.TargetNode is ClassDeclarationSyntax cds && ctx.TargetSymbol is INamedTypeSymbol namedTargetSymbol)
         {
             ProtoClientMatchBuilder? target = default;
             var attributes = cds.AttributeLists.SelectMany(list => list.Attributes);
@@ -81,7 +88,7 @@ internal class ProtoClientAttribute : System.Attribute
                     {
                         throw new InvalidOperationException("Multiple ProtoClientAttribute are not allowed.");
                     }
-                    target = new ProtoClientMatchBuilder(ctx.SemanticModel, cds);
+                    target = new ProtoClientMatchBuilder(ctx.SemanticModel, cds, namedTargetSymbol);
                     var args = (IReadOnlyList<AttributeArgumentSyntax>?)attribute.ArgumentList?.Arguments ?? Array.Empty<AttributeArgumentSyntax>();
                     var i = 0;
                     foreach (var arg in args)
