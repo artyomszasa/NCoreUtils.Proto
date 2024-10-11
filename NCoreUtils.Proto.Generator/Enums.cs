@@ -8,6 +8,16 @@ public enum ProtoErrorType { Default = 0, Json = 1, Custom = 255 }
 
 public enum ProtoNaming { SnakeCase = 0, CamelCase = 1, PascalCase = 2, KebabCase = 3 }
 
+public enum ProtoHttpMethod
+{
+    Default = 0,
+    Get = 1,
+    Post = 2,
+    Put = 3,
+    Delete = 4,
+    Patch = 5
+}
+
 public enum ProtoSingleJsonParameterWrapping
 {
     /// <summary>

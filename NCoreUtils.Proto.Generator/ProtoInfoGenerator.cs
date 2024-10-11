@@ -61,6 +61,8 @@ internal class ProtoMethodInfoAttribute : System.Attribute
 
     public string? Path { get; set; }
 
+    public NCoreUtils.Proto.HttpMethod HttpMethod { get; set; }
+
     public ProtoMethodInfoAttribute(string methodName)
         => MethodName = methodName ?? throw new System.ArgumentNullException(nameof(methodName));
 }
@@ -255,6 +257,9 @@ internal class ProtoJsonConverterAttribute : System.Attribute
                                         break;
                                     case "SingleJsonParameterWrapping":
                                         opts.SingleJsonParameterWrapping = GetConstantAsEnum<ProtoSingleJsonParameterWrapping>(context.SemanticModel, arg.Expression);
+                                        break;
+                                    case "HttpMethod":
+                                        opts.HttpMethod = GetConstantAsEnum<ProtoHttpMethod>(context.SemanticModel, arg.Expression);
                                         break;
                                     case "KeepAsyncSuffix":
                                         opts.KeepAsyncSuffix = GetConstantAsBoolean(context.SemanticModel, arg.Expression);

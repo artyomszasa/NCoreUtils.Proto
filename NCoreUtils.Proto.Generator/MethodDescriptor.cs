@@ -18,6 +18,7 @@ internal class MethodDescriptor(
     ProtoErrorType error,
     ProtoNaming? parameterNaming,
     ProtoSingleJsonParameterWrapping singleJsonParameterWrapping,
+    ProtoHttpMethod httpMethod,
     TypeName? inputDtoTypeName)
 {
     public string ReturnType { get; } = returnType;
@@ -49,6 +50,8 @@ internal class MethodDescriptor(
     public ProtoNaming? ParameterNaming { get; } = parameterNaming;
 
     public ProtoSingleJsonParameterWrapping SingleJsonParameterWrapping { get; } = singleJsonParameterWrapping;
+
+    public ProtoHttpMethod HttpMethod { get; } = httpMethod;
 
     public TypeName? InputDtoTypeName { get; } = inputDtoTypeName;
 }

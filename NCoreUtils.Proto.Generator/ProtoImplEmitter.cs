@@ -42,6 +42,30 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
         }}";
     }
 
+    private string EmitQueryRequestReader(MethodDescriptor desc, ITypeSymbol? _)
+    {
+        if (desc.Parameters.Count == 1)
+        {
+            var e = desc.Parameters[0];
+            return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        {{
+            var data = request.Query;
+            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(ReadArgument<{e.TypeName}>(data[""{e.Key}""]));
+        }}";
+        }
+        if (desc.Parameters.Count > 0)
+        {
+            return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        {{
+            var data = request.Query;
+            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(new {desc.InputDtoTypeName}(
+                {string.Join("," + NewLine + "                ", desc.Parameters.Select(e => $"ReadArgument<{e.TypeName}>(data[\"{e.Key}\"])"))}
+            ));
+        }}";
+        }
+        return string.Empty;
+    }
+
     private string EmitRequestReader(MethodDescriptor desc, ITypeSymbol? implType) => desc.Input switch
     {
         ProtoInputType.Json when true == desc.InputDtoTypeName?.IsNullableReference => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
@@ -50,13 +74,7 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
         => (await global::System.Text.Json.JsonSerializer.DeserializeAsync(request.Body, {Info.JsonSerializerContextType}.Default.{desc.InputDtoTypeName!.JsonContextName}, cancellationToken))
             ?? throw new global::NCoreUtils.Proto.ProtoException(""generic_error"", ""Unable to deserialize JSON arguments for {Info.InterfaceFullName}.{desc.MethodName}."");",
         ProtoInputType.Form => EmitFormRequestReader(desc, implType),
-        ProtoInputType.Query when desc.Parameters.Count > 0 => @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
-        {{
-            var data = request.Query;
-            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(new {desc.InputDtoTypeName}(
-                {string.Join("," + NewLine + "                ", desc.Parameters.Select(e => $"ReadArgument<{e.TypeName}>(data[\"{e.Key}\"])"))}
-            ));
-        }}",
+        ProtoInputType.Query => EmitQueryRequestReader(desc, implType),
         _ => string.Empty
     };
 
@@ -128,19 +146,31 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
     }}";
     }
 
+    private string GetImplAccessiibility() => Info.ServiceType.DeclaredAccessibility switch
+    {
+        Accessibility.NotApplicable => string.Empty,
+        Accessibility.Private => "private ",
+        Accessibility.ProtectedAndInternal => "private protected ",
+        Accessibility.Protected => "protected ",
+        Accessibility.Internal => "internal ",
+        Accessibility.ProtectedOrInternal => "protected internal ",
+        Accessibility.Public => "public ",
+        _ => string.Empty
+    };
+
     public string EmitImpl(string @namespace, string rootName, string name, ITypeSymbol? implType)
     {
         const string TEndpointBuilder = "global::Microsoft.AspNetCore.Builder.EndpointBuilder";
-
+        var accessibility = GetImplAccessiibility();
         return @$"#nullable enable
 namespace {@namespace}
 {{
-public partial class {rootName}
+{accessibility}partial class {rootName}
 {{
     public enum Methods {{ {string.Join(", ", Info.Service.Methods.Select(e => e.MethodId))} }}
 }}
 
-public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationBase
+{accessibility}partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationBase
 {{
     public {Info.InterfaceFullName} Impl {{ get; }}
 
@@ -156,7 +186,7 @@ public partial class {name} : global::NCoreUtils.AspNetCore.ProtoImplementationB
     {string.Join(NewLine + "    ", Info.Service.Methods.Select(m => EmitMethodInvoker(m, implType)))}
 }}
 
-public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods>
+{accessibility}class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDataSource, global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods>
 {{
     private static class Segments
     {{
@@ -243,7 +273,7 @@ public class {name}DataSource : global::Microsoft.AspNetCore.Routing.EndpointDat
         => global::Microsoft.Extensions.FileProviders.NullChangeToken.Singleton;
 }}
 
-public static class EndpointRouteBuilder{name}Extensions
+{accessibility}static class EndpointRouteBuilder{name}Extensions
 {{
     public static global::NCoreUtils.AspNetCore.IProtoEndpointsConventionBuilder<{rootName}.Methods> Map{Info.ImplType.Name}(
         this global::Microsoft.AspNetCore.Routing.IEndpointRouteBuilder endpoints,
@@ -271,6 +301,7 @@ public static class EndpointRouteBuilder{name}Extensions
             {{
                 convention(builder{desc.MethodId});
             }}
+            {(desc.HttpMethod == ProtoHttpMethod.Default ? string.Empty : $"builder{desc.MethodId}.Metadata.Add(new global::Microsoft.AspNetCore.Routing.HttpMethodMetadata(new [] {{ global::Microsoft.AspNetCore.Http.HttpMethods.{desc.HttpMethod} }}));")}
             if (MethodConventions.TryGetValue({rootName}.Methods.{desc.MethodId}, out var conventions{desc.MethodId}))
             {{
                 foreach (var convention in conventions{desc.MethodId})

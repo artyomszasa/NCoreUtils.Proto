@@ -10,6 +10,7 @@ public class MethodGenerationOptions(
     ProtoNaming? naming,
     ProtoNaming? parameterNaming,
     ProtoSingleJsonParameterWrapping? singleJsonParameterWrapping,
+    ProtoHttpMethod httpMethod,
     bool? keepAsyncSuffix,
     string? path)
 {
@@ -26,6 +27,8 @@ public class MethodGenerationOptions(
     public ProtoNaming? ParameterNaming { get; } = parameterNaming;
 
     public ProtoSingleJsonParameterWrapping? SingleJsonParameterWrapping { get; } = singleJsonParameterWrapping;
+
+    public ProtoHttpMethod HttpMethod { get; } = httpMethod;
 
     public bool? KeepAsyncSuffix { get; } = keepAsyncSuffix;
 

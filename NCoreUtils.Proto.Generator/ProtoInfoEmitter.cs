@@ -29,6 +29,8 @@ internal class ProtoInfoEmitter(ProtoServiceInfo info)
 
         public const global::NCoreUtils.Proto.ErrorType Error = global::NCoreUtils.Proto.ErrorType.{desc.Error};
 
+        public const global::NCoreUtils.Proto.HttpMethod HttpMethod = global::NCoreUtils.Proto.HttpMethod.{desc.HttpMethod};
+
         {(desc.ParameterNaming.HasValue ? $"public const global::NCoreUtils.Proto.Naming ParameterNaming = global::NCoreUtils.Proto.Naming.{desc.ParameterNaming.Value};" : string.Empty)}
 
         public const global::NCoreUtils.Proto.SingleJsonParameterWrapping SingleJsonParameterWrapping = global::NCoreUtils.Proto.SingleJsonParameterWrapping.{desc.SingleJsonParameterWrapping};

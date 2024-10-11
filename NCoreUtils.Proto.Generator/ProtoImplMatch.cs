@@ -7,6 +7,7 @@ namespace NCoreUtils.Proto;
 public class ProtoImplMatch(
     SemanticModel semanticModel,
     ClassDeclarationSyntax cds,
+    INamedTypeSymbol serviceType,
     ITypeSymbol infoType,
     ITypeSymbol? jsonSerializerContext,
     string? path,
@@ -16,6 +17,8 @@ public class ProtoImplMatch(
     public SemanticModel SemanticModel { get; } = semanticModel;
 
     public ClassDeclarationSyntax Cds { get; } = cds;
+
+    public INamedTypeSymbol ServiceType { get; } = serviceType;
 
     public ITypeSymbol InfoType { get; } = infoType;
 

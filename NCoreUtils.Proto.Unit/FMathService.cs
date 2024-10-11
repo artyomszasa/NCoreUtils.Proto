@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 namespace NCoreUtils.Proto.Unit;
 
 [ProtoService(typeof(FMathInfo), typeof(FMathJsonSerializerContext))]
-public partial class FMathService : IMath
+internal partial class FMathService : IMath
 {
     private int Counter { get; set; }
 

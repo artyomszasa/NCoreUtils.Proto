@@ -64,7 +64,7 @@ internal class ProtoServiceAttribute : System.Attribute
 
     private static ProtoImplMatch? GetTargetOrNull(GeneratorAttributeSyntaxContext context, CancellationToken cancellationToken)
     {
-        if (context.TargetNode is ClassDeclarationSyntax cds)
+        if (context.TargetNode is ClassDeclarationSyntax cds && context.TargetSymbol is INamedTypeSymbol namedTargetSymbol)
         {
             ProtoImplMatchBuilder? target = default;
             var attributes = cds.AttributeLists.SelectMany(list => list.Attributes);
@@ -82,7 +82,7 @@ internal class ProtoServiceAttribute : System.Attribute
                     {
                         throw new InvalidOperationException("Multiple ProtoServiceAttribute are not allowed.");
                     }
-                    target = new ProtoImplMatchBuilder(context.SemanticModel, cds);
+                    target = new ProtoImplMatchBuilder(context.SemanticModel, cds, namedTargetSymbol);
                     var args = (IReadOnlyList<AttributeArgumentSyntax>?)attribute.ArgumentList?.Arguments ?? Array.Empty<AttributeArgumentSyntax>();
                     var i = 0;
                     foreach (var arg in args)

@@ -75,10 +75,19 @@ internal abstract class ProtoConsumerParser(SemanticModel semanticModel) : Proto
                     ?.ConstantValue
                     ?.UnboxEnum<ProtoSingleJsonParameterWrapping>()
                     ?? throw new ProtoClientInvalidInfoException($"Method {e.Name} has no single json parameter wrapping defined");
-                var verb = input switch
+                var httpMethod = e.GetMembers().OfType<IFieldSymbol>()
+                    .FirstOrDefault(f => f.Name == "HttpMethod")
+                    ?.ConstantValue
+                    ?.UnboxEnum<ProtoHttpMethod>()
+                    ?? ProtoHttpMethod.Default;
+                var verb = httpMethod switch
                 {
-                    ProtoInputType.Query => "Get",
-                    _ => "Post"
+                    ProtoHttpMethod.Default => input switch
+                    {
+                        ProtoInputType.Query => "Get",
+                        _ => "Post"
+                    },
+                    var method => method.ToString()
                 };
                 var inputDtoType = e.AllInterfaces.TryGetFirst(i => i.Name == "IProtoMethodInputDto", out var dto)
                     ? dto.TypeArguments[0]
@@ -99,6 +108,7 @@ internal abstract class ProtoConsumerParser(SemanticModel semanticModel) : Proto
                     error: error,
                     parameterNaming: parameterNaming,
                     singleJsonParameterWrapping: sjaw,
+                    httpMethod: httpMethod,
                     inputDtoTypeName: inputDtoType is null ? default : TypeName.Create(inputDtoType)
                 );
             })

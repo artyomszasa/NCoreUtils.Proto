@@ -102,7 +102,7 @@ internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semant
                     ProtoOutputType.Default when !noReturn => ProtoOutputType.Json,
                     var o => o
                 };
-                var sjaw = (opts?.SingleJsonParameterWrapping ?? match.SingleJsonParameterWrapping ?? ProtoSingleJsonParameterWrapping.DoNotWrap);
+                var sjaw = opts?.SingleJsonParameterWrapping ?? match.SingleJsonParameterWrapping ?? ProtoSingleJsonParameterWrapping.DoNotWrap;
 
                 // var path = '/' + rootPath.Trim('/') + '/' + (opts?.Path ?? ((opts?.Naming ?? match.Naming) switch
                 // {
@@ -130,12 +130,17 @@ internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semant
                     parameters: parameters,
                     usesCancellation: usesCancellation,
                     path: path,
-                    verb: input == ProtoInputType.Query ? "Get" : "Post",
+                    verb: opts?.HttpMethod switch
+                    {
+                        ProtoHttpMethod method when method != ProtoHttpMethod.Default => method.ToString(),
+                        _ => input == ProtoInputType.Query ? "Get" : "Post"
+                    },
                     input: input,
                     output: output,
                     error: opts?.Error ?? match.Error,
                     parameterNaming: parameterNaming,
                     singleJsonParameterWrapping: sjaw,
+                    httpMethod: opts?.HttpMethod ?? ProtoHttpMethod.Default,
                     inputDtoTypeName: sjaw switch
                     {
                         ProtoSingleJsonParameterWrapping.DoNotWrap when parameters.Count == 1 => TypeName.Create(parameters[0].Type),

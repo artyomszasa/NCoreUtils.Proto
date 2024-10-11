@@ -4,6 +4,7 @@ namespace NCoreUtils.Proto;
 
 internal class ProtoImplInfo(
     ITypeSymbol implType,
+    INamedTypeSymbol serviceType,
     ITypeSymbol infoType,
     ITypeSymbol? jsonSerializerContextType,
     ITypeSymbol? implementationFactory,
@@ -14,6 +15,8 @@ internal class ProtoImplInfo(
     public ITypeSymbol InterfaceType => Service.Target;
 
     public string InterfaceFullName => InterfaceType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+
+    public INamedTypeSymbol ServiceType { get; } = serviceType;
 
     public ITypeSymbol InfoType { get; } = infoType;
 

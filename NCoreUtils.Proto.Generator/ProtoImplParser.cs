@@ -17,6 +17,7 @@ internal class ProtoImplParser(SemanticModel semanticModel) : ProtoConsumerParse
         return new ProtoImplInfo(
             implType: implType,
             infoType: match.InfoType,
+            serviceType: match.ServiceType,
             jsonSerializerContextType: match.JsonSerializerContext,
             implementationFactory: match.ImplementationFactory,
             service: service

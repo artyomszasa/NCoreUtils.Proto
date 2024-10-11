@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace NCoreUtils.Proto;
 
@@ -89,7 +90,7 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
             var output => throw new InvalidOperationException($"Unsupported ouput type {output}.")
         };
 
-    private string EmitMethod(MethodDescriptor desc)
+    private string EmitMethod(MethodDescriptor desc, INamedTypeSymbol? clientType)
     {
         var requestVar = "request";
         var requestVarSeed = 0;
@@ -98,26 +99,41 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
             requestVar = $"request{++requestVarSeed}";
         }
         var ctoken = desc.UsesCancellation ? "cancellationToken" : "global::System.Threading.CancellationToken.None";
+        var errorHandlerName = $"Handle{desc.MethodId}Errors";
+        var errorHandler = clientType is null
+            ? "HandleErrors"
+            : clientType.GetMembers().Any(m => m is IMethodSymbol meth && meth.Name == errorHandlerName)
+                ? errorHandlerName
+                : "HandleErrors";
         return @$"public virtual async {desc.ReturnType} {desc.MethodName}({string.Join(", ", desc.Parameters.Select(e => $"{e.TypeName} {e.Name}"))}{(desc.UsesCancellation ? (desc.Parameters.Count > 0 ? ", " : string.Empty) + "global::System.Threading.CancellationToken cancellationToken" : string.Empty)})
     {{
         var {requestVar} = Create{desc.MethodId}Request({string.Join(", ", desc.Parameters.Select(e => e.Name))});
         using var client = CreateHttpClient();
         {(ShouldDisposeResponse(desc) ? "using " : string.Empty)}var response = await client.SendAsync({requestVar}, System.Net.Http.HttpCompletionOption.ResponseHeadersRead, {ctoken});
-        await HandleErrors(response, {ctoken});
+        await {errorHandler}(response, {ctoken});
         {(desc.NoReturn ? string.Empty : $"return await Read{desc.MethodId}Response(response, {ctoken});")}
     }}";
     }
 
-    private static string EmitDefaultShouldDisposeRequestMethod()
+    private string GetClientAccessiibility() => Info.ClientType.DeclaredAccessibility switch
     {
-        return "private static bool ShouldDisposeRequest(Method method) => true;";
-    }
+        Accessibility.NotApplicable => string.Empty,
+        Accessibility.Private => "private ",
+        Accessibility.ProtectedAndInternal => "private protected ",
+        Accessibility.Protected => "protected ",
+        Accessibility.Internal => "internal ",
+        Accessibility.ProtectedOrInternal => "protected internal ",
+        Accessibility.Public => "public ",
+        _ => string.Empty
+    };
 
     public string EmitClient(string @namespace, string name)
-        => @$"#nullable enable
+    {
+        var accessibility = GetClientAccessiibility();
+        return @$"#nullable enable
 namespace {@namespace}
 {{
-public sealed class {name}Configuration : global::NCoreUtils.Proto.IEndpointConfiguration
+{accessibility}sealed class {name}Configuration : global::NCoreUtils.Proto.IEndpointConfiguration
 {{
     public string? HttpClient {{ get; set; }}
 
@@ -126,7 +142,7 @@ public sealed class {name}Configuration : global::NCoreUtils.Proto.IEndpointConf
     public string? Path {{ get; set; }}
 }}
 
-public static class ServiceCollection{name}Extensions
+{accessibility}static class ServiceCollection{name}Extensions
 {{
     public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection Add{name}(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, {name}Configuration configuration)
         => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<{Info.InterfaceFullName}, {name}>(
@@ -158,7 +174,7 @@ public static class ServiceCollection{name}Extensions
         }});
 }}
 
-public partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.InterfaceFullName}
+{accessibility}partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.InterfaceFullName}
 {{
     public enum Methods {{ {string.Join(", ", Info.Service.Methods.Select(e => e.MethodId))} }}
 
@@ -201,7 +217,8 @@ public partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.In
 
     {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitReadResponseMethod))}
 
-    {string.Join(NewLine + "    ", Info.Service.Methods.Select(EmitMethod))}
+    {string.Join(NewLine + "    ", Info.Service.Methods.Select(desc => EmitMethod(desc, Info.ClientType)))}
 }}
 }}";
+    }
 }
