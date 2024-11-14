@@ -20,7 +20,7 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
     {
         if (implType is not null)
         {
-            var methodName = $"ReadArgumentOf{TypeName.GetTypeInfoPropertyName(p.Type)}";
+            var methodName = $"ReadArgumentOf{p.TypeInfoPropertyName}";
             if (implType.GetMembers()
                 .OfType<IMethodSymbol>()
                 .TryGetFirst(e => e.Parameters.Length == 1 && e.Name == methodName, out var m))

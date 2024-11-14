@@ -51,7 +51,7 @@ internal class ProtoClientEmitter(ProtoClientInfo info)
     }}";
 
         static string EmitAdd(ParameterDescriptor p)
-            => p.Type.IsValueType
+            => p.IsValueType
                 ? $@"if (default != {p.Name})
         {{
             data.Add(""{p.Key}"", StringifyArgument({p.Name}));

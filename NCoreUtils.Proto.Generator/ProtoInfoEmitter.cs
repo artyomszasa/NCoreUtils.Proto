@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
@@ -13,7 +14,7 @@ internal class ProtoInfoEmitter(ProtoServiceInfo info)
 
     private ProtoServiceInfo Info { get; } = info ?? throw new ArgumentNullException(nameof(info));
 
-    private string EmitMethodInfo(MethodDescriptor desc)
+    private static string DoEmitMethodInfo(MethodDescriptor desc)
         => @$"public sealed class {desc.MethodId}Info
         : global::NCoreUtils.Proto.Internal.ProtoMethodInfo
         , {(desc.NoReturn ? $"global::NCoreUtils.Proto.Internal.IProtoMethodVoidReturn<{desc.ReturnType}>" : $"global::NCoreUtils.Proto.Internal.IProtoMethodReturn<{desc.ReturnType}, {desc.ReturnValueType}>")}
@@ -40,6 +41,11 @@ internal class ProtoInfoEmitter(ProtoServiceInfo info)
         public const bool NoReturn = {(desc.NoReturn ? "true" : "false")};
     }}";
 
+    private static ConcurrentDictionary<MethodDescriptor, string> MethodInfoCache { get; } = new();
+
+    private static string EmitMethodInfo(MethodDescriptor desc)
+        => MethodInfoCache.GetOrAdd(desc, DoEmitMethodInfo);
+
     private string EmitInputDto(MethodDescriptor desc)
     {
         if (desc.SingleJsonParameterWrapping == ProtoSingleJsonParameterWrapping.DoNotWrap && desc.Parameters.Count == 1)
@@ -58,11 +64,11 @@ internal class ProtoInfoEmitter(ProtoServiceInfo info)
 
         static string EmitProperty(ParameterDescriptor e)
         {
-            if (e.ConverterType is null)
+            if (e.ConverterTypeFullName is null)
             {
                 return $"public {e.TypeName} {e.Name} {{ get; }}";
             }
-            return @$"[System.Text.Json.Serialization.JsonConverterAttribute(typeof({e.ConverterType.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}))]
+            return @$"[System.Text.Json.Serialization.JsonConverterAttribute(typeof({e.ConverterTypeFullName}))]
     public {e.TypeName} {e.Name} {{ get; }}";
         }
     }

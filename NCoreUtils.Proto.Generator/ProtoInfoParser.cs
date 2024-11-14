@@ -143,7 +143,9 @@ internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semant
                     httpMethod: opts?.HttpMethod ?? ProtoHttpMethod.Default,
                     inputDtoTypeName: sjaw switch
                     {
+#pragma warning disable CS0618 // Type or member is obsolete
                         ProtoSingleJsonParameterWrapping.DoNotWrap when parameters.Count == 1 => TypeName.Create(parameters[0].Type),
+#pragma warning restore CS0618 // Type or member is obsolete
                         _ => TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args")
                     }
                 );
