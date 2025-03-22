@@ -86,7 +86,10 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
         => desc.NoReturn ? string.Empty : desc.Output switch
         {
             ProtoOutputType.Json => @$"protected virtual global::System.Threading.Tasks.Task Write{desc.MethodId}ResultAsync(global::Microsoft.AspNetCore.Http.HttpResponse response, {desc.ReturnValueType} result, global::System.Threading.CancellationToken cancellationToken)
-        => global::System.Text.Json.JsonSerializer.SerializeAsync(response.Body, result, {Info.JsonSerializerContextType}.Default.{desc.ReturnValueType.JsonContextName}!, cancellationToken);",
+        {{
+            response.ContentType = ""application/json; charset=utf-8"";
+            return global::System.Text.Json.JsonSerializer.SerializeAsync(response.Body, result, {Info.JsonSerializerContextType}.Default.{desc.ReturnValueType.JsonContextName}!, cancellationToken);
+        }}",
             _ => string.Empty
         };
 
