@@ -145,9 +145,10 @@ namespace {@namespace}
 {accessibility}static class ServiceCollection{name}Extensions
 {{
     public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection Add{name}(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, {name}Configuration configuration)
-        => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<{Info.InterfaceFullName}, {name}>(
-            Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton(services, configuration)
-        );
+        => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<{Info.InterfaceFullName}, {name}>(services, serviceProvider => new {name}(
+            configuration: configuration,
+            httpClientFactory: global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Net.Http.IHttpClientFactory>(serviceProvider)
+        ));
 
     public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection Add{name}(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, global::NCoreUtils.Proto.IEndpointConfiguration configuration, string? path = default)
         => services.Add{name}(new {name}Configuration

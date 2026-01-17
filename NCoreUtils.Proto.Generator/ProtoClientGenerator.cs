@@ -129,6 +129,15 @@ internal class HandlesResponseDisposalAttribute : System.Attribute
         return null;
     }
 
+    private static DiagnosticDescriptor CustomErrorDescriptor { get; } = new DiagnosticDescriptor(
+        id: "PROTO0000",
+        title: "Custom error",
+        messageFormat: "Custom error ({0}, {1}).",
+        category: "Error",
+        defaultSeverity: DiagnosticSeverity.Error,
+        isEnabledByDefault: true
+    );
+
     public void Initialize(IncrementalGeneratorInitializationContext context)
     {
         context.RegisterPostInitializationOutput(ctx => ctx.AddSource("Attributes.g.cs", SourceText.From(attributeSource, Utf8)));
@@ -138,12 +147,22 @@ internal class HandlesResponseDisposalAttribute : System.Attribute
             GetTargetOrNull
         ).Where(match => match is not null)!;
 
+
+
         context.RegisterSourceOutput(matches, static (ctx, match) =>
         {
-            ctx.CancellationToken.ThrowIfCancellationRequested();
-            var client = new ProtoClientParser(match.SemanticModel).Parse(match);
-            var code = new ProtoClientEmitter(client).EmitClient(GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated", match.Cds.Identifier.ValueText);
-            ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code, Utf8));
+            try
+            {
+                ctx.CancellationToken.ThrowIfCancellationRequested();
+                var client = new ProtoClientParser(match.SemanticModel).Parse(match);
+                var code = new ProtoClientEmitter(client).EmitClient(GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated", match.Cds.Identifier.ValueText);
+                ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code, Utf8));
+            }
+            catch (Exception exn)
+            {
+                var diag = Diagnostic.Create(CustomErrorDescriptor, default, [exn.Message, exn.StackTrace.Replace("\n", " ")]);
+                ctx.ReportDiagnostic(diag);
+            }
         });
     }
 }
