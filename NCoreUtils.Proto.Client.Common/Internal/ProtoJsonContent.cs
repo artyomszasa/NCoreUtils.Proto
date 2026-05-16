@@ -8,13 +8,13 @@ using System.Threading.Tasks;
 
 namespace NCoreUtils.Proto.Internal;
 
-public static class ProtoJsonContent
+public abstract class ProtoJsonContent : HttpContent
 {
     public static ProtoJsonContent<T> Create<T>(T value, JsonTypeInfo<T> typeInfo, MediaTypeHeaderValue? mediaType = default)
         => new(value, typeInfo, mediaType);
 }
 
-public class ProtoJsonContent<T> : HttpContent
+public class ProtoJsonContent<T> : ProtoJsonContent
 {
     private static MediaTypeHeaderValue? Utf8JsonMediaType { get; set; }
 
