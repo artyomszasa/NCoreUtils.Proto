@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
 using Microsoft.CodeAnalysis;
@@ -146,8 +147,7 @@ namespace {@namespace}
 {{
     public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection Add{name}(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, {name}Configuration configuration)
         => Microsoft.Extensions.DependencyInjection.ServiceCollectionServiceExtensions.AddSingleton<{Info.InterfaceFullName}, {name}>(services, serviceProvider => new {name}(
-            configuration: configuration,
-            httpClientFactory: global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Net.Http.IHttpClientFactory>(serviceProvider)
+            configuration: configuration{EmitHttpClientFactoryParameterInitializer(Info.NoHttpClientFactory)}{EmitAdditionalConstructorParametersInitialization(Info.AdditionalConstructorParameters)}
         ));
 
     public static global::Microsoft.Extensions.DependencyInjection.IServiceCollection Add{name}(this global::Microsoft.Extensions.DependencyInjection.IServiceCollection services, global::NCoreUtils.Proto.IEndpointConfiguration configuration, string? path = default)
@@ -175,7 +175,7 @@ namespace {@namespace}
         }});
 }}
 
-{accessibility}partial class {name} : global::NCoreUtils.Proto.ProtoClientBase, {Info.InterfaceFullName}
+{accessibility}partial class {name} : {(Info.NoHttpClientFactory ? "global::NCoreUtils.Proto.ProtoClientCore" : "global::NCoreUtils.Proto.ProtoClientBase")}, {Info.InterfaceFullName}
 {{
     public enum Methods {{ {string.Join(", ", Info.Service.Methods.Select(e => e.MethodId))} }}
 
@@ -189,8 +189,10 @@ namespace {@namespace}
 
     protected override string HttpClientConfiguration => ""{Info.HttpClientConfiguration}"";
 
-    public {name}({name}Configuration configuration, global::System.Net.Http.IHttpClientFactory httpClientFactory)
-        : base(configuration, httpClientFactory)
+    {EmitAdditionalConstructorParameterProperties(Info.AdditionalConstructorParameters)}
+
+    public {name}({name}Configuration configuration{(Info.NoHttpClientFactory ? string.Empty : ", global::System.Net.Http.IHttpClientFactory httpClientFactory")}{EmitAdditionalConstructorArguments(Info.AdditionalConstructorParameters)})
+        : base(configuration{(Info.NoHttpClientFactory ? string.Empty : ", httpClientFactory")})
     {{
         if (!(configuration.Path is null))
         {{
@@ -202,6 +204,7 @@ namespace {@namespace}
         }};
         MethodPaths = methodPaths;
         MethodPathFactory = GetMethodPath;
+        {EmitAdditionalConstructorParameterPropertyAssignments(Info.AdditionalConstructorParameters)}
     }}
 
     private string GetCachedMethodPath(Methods method)
@@ -221,5 +224,52 @@ namespace {@namespace}
     {string.Join(NewLine + "    ", Info.Service.Methods.Select(desc => EmitMethod(desc, Info.ClientType)))}
 }}
 }}";
+
+        static string EmitAdditionalConstructorParameterProperty(ProtoClientConstructorParameter parameter)
+            => $"protected {parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {parameter.Name} {{ get; }}";
+
+        static string EmitAdditionalConstructorParameterProperties(IReadOnlyList<ProtoClientConstructorParameter> parameters)
+        {
+            return string.Join(NewLine + "    ", parameters.Select(EmitAdditionalConstructorParameterProperty));
+        }
+
+        static string EmitAdditionalConstructorParameterPropertyAssignment(ProtoClientConstructorParameter parameter)
+            => $"this.{parameter.Name} = {parameter.Name};";
+
+        static string EmitAdditionalConstructorParameterPropertyAssignments(IReadOnlyList<ProtoClientConstructorParameter> parameters)
+        {
+            return string.Join(NewLine + "        ", parameters.Select(EmitAdditionalConstructorParameterPropertyAssignment));
+        }
+
+        static string EmitAdditionalConstructorArguments(IReadOnlyList<ProtoClientConstructorParameter> parameters)
+        {
+            if (parameters.Count == 0)
+            {
+                return string.Empty;
+            }
+            return $", {string.Join(", ", parameters.Select(p => $"{p.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)} {p.Name}"))}";
+        }
+
+        static string EmitAdditionalConstructorParameterInitialization(ProtoClientConstructorParameter parameter)
+            => $"{parameter.Name}: global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<{parameter.Type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)}>(serviceProvider)";
+
+        static string EmitAdditionalConstructorParametersInitialization(IReadOnlyList<ProtoClientConstructorParameter> parameters)
+        {
+            if (parameters.Count == 0)
+            {
+                return string.Empty;
+            }
+            return $",{NewLine}            {string.Join($",{NewLine}            ", parameters.Select(EmitAdditionalConstructorParameterInitialization))}";
+        }
+
+        static string EmitHttpClientFactoryParameterInitializer(bool noHttpClientFactory)
+        {
+            if (noHttpClientFactory)
+            {
+                return string.Empty;
+            }
+            return @",
+            httpClientFactory: global::Microsoft.Extensions.DependencyInjection.ServiceProviderServiceExtensions.GetRequiredService<global::System.Net.Http.IHttpClientFactory>(serviceProvider)";
+        }
     }
 }

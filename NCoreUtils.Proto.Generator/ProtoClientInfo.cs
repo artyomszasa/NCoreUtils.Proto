@@ -1,8 +1,16 @@
+using System.Collections.Generic;
 using Microsoft.CodeAnalysis;
 
 namespace NCoreUtils.Proto;
 
-internal class ProtoClientInfo(INamedTypeSymbol clientType, ITypeSymbol infoType, ITypeSymbol? jsonSerializerContextType, ProtoServiceInfo service, string httpClientConfiguration)
+internal class ProtoClientInfo(
+    INamedTypeSymbol clientType,
+    ITypeSymbol infoType,
+    ITypeSymbol? jsonSerializerContextType,
+    ProtoServiceInfo service,
+    bool noHttpClientFactory,
+    string httpClientConfiguration,
+    IReadOnlyList<ProtoClientConstructorParameter> additionalConstructorParameters)
 {
     public INamedTypeSymbol ClientType => clientType;
 
@@ -16,5 +24,9 @@ internal class ProtoClientInfo(INamedTypeSymbol clientType, ITypeSymbol infoType
 
     public ProtoServiceInfo Service { get; } = service;
 
+    public bool NoHttpClientFactory { get; } = noHttpClientFactory;
+
     public string HttpClientConfiguration { get; } = httpClientConfiguration;
+
+    public IReadOnlyList<ProtoClientConstructorParameter> AdditionalConstructorParameters { get; } = additionalConstructorParameters;
 }

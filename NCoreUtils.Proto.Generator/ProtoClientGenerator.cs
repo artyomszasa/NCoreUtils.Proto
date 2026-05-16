@@ -24,10 +24,26 @@ internal class ProtoClientAttribute : System.Attribute
 
     public string? Path { get; set; }
 
+    public bool NoHttpClientFactory { get; set; }
+
     public ProtoClientAttribute(System.Type info, System.Type jsonSerializerContext)
     {
         Info = info ?? throw new System.ArgumentNullException(nameof(info));
         JsonSerializerContext = jsonSerializerContext ?? throw new System.ArgumentNullException(nameof(jsonSerializerContext));
+    }
+}
+
+[System.AttributeUsage(System.AttributeTargets.Class, AllowMultiple = true)]
+internal class ProtoClientConstructorParameterAttribute : System.Attribute
+{
+    public System.Type Type { get; }
+
+    public string Name { get; }
+
+    public ProtoClientConstructorParameterAttribute(System.Type type, string name)
+    {
+        Type = type ?? throw new System.ArgumentNullException(nameof(type));
+        Name = name ?? throw new System.ArgumentNullException(nameof(name));
     }
 }
 
@@ -47,6 +63,20 @@ internal class HandlesResponseDisposalAttribute : System.Attribute
         {
             { HasValue: true, Value: var value } => value?.ToString(),
             _ => throw new InvalidOperationException($"Unable to get string? value from {expression}")
+        };
+    }
+
+    private static bool GetConstantAsBoolean(SemanticModel semanticModel, ExpressionSyntax expression)
+    {
+        return semanticModel.GetConstantValue(expression) switch
+        {
+            { HasValue: true, Value: var value } => value switch
+            {
+                null => throw new InvalidOperationException($"Unable to get boolean value from {expression}"),
+                bool booleanValue => booleanValue,
+                _ => throw new InvalidOperationException($"Unable to get boolean value from {expression} ({value})"),
+            },
+            _ => throw new InvalidOperationException($"Unable to get boolean value from {expression}")
         };
     }
 
@@ -116,14 +146,51 @@ internal class HandlesResponseDisposalAttribute : System.Attribute
                                 case "Path":
                                     target.Path = GetConstantAsMaybeString(ctx.SemanticModel, arg.Expression);
                                     break;
+                                case "NoHttpClientFactory":
+                                    target.NoHttpClientFactory = GetConstantAsBoolean(ctx.SemanticModel, arg.Expression);
+                                    break;
                             }
                         }
                     }
                 }
-                if (target is not null && target.IsValid)
+                if (fullName == "ProtoClientConstructorParameterAttribute" || fullName == "NCoreUtils.Proto.ProtoClientConstructorParameterAttribute")
                 {
-                    return target.Build();
+                    if (target is null)
+                    {
+                        throw new InvalidOperationException("ProtoClientConstructorParameterAttribute must follow ProtoClientAttribute.");
+                    }
+                    ITypeSymbol? pType = default;
+                    string? pName = default;
+                    var args = (IReadOnlyList<AttributeArgumentSyntax>?)attribute.ArgumentList?.Arguments ?? Array.Empty<AttributeArgumentSyntax>();
+                    var i = 0;
+                    foreach (var arg in args)
+                    {
+                        if (arg.NameEquals is null)
+                        {
+                            if (i > 1)
+                            {
+                                throw new InvalidOperationException("ProtoClientConstructorParameterAttribute must contain exactly two not named argument.");
+                            }
+                            if (i == 0)
+                            {
+                                pType = ctx.SemanticModel.GetTypeInfo(arg.ChildNodes().Single().ChildNodes().Single()).ConvertedType;
+                            }
+                            else
+                            {
+                                pName = GetConstantAsMaybeString(ctx.SemanticModel, arg.Expression) ?? throw new InvalidOperationException("Constructor parameter name must be a valid string.");
+                            }
+                            ++i;
+                        }
+                    }
+                    if (pType is not null && pName is not null)
+                    {
+                        target.AddAdditionalConstructorParameter(pType, pName);
+                    }
                 }
+            }
+            if (target is not null && target.IsValid)
+            {
+                return target.Build();
             }
         }
         return null;

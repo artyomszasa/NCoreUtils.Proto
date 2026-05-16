@@ -12,7 +12,9 @@ internal class ProtoClientParser(SemanticModel semanticModel) : ProtoConsumerPar
             infoType: match.InfoType,
             jsonSerializerContextType: match.JsonSerializerContext,
             service: service,
-            httpClientConfiguration: match.Cds.Identifier.ValueText
+            noHttpClientFactory: match.NoHttpClientFactory,
+            httpClientConfiguration: match.Cds.Identifier.ValueText,
+            additionalConstructorParameters: match.AdditionalConstructorParameters
         );
     }
 }

@@ -11,6 +11,8 @@ public class ProtoClientMatch(
     ITypeSymbol infoType,
     ITypeSymbol? jsonSerializerContext,
     string? path,
+    bool noHttpClientFactory,
+    IReadOnlyList<ProtoClientConstructorParameter> additionalConstructorParameters,
     IReadOnlyDictionary<string, string> methodPaths)
 {
     public SemanticModel SemanticModel { get; } = semanticModel;
@@ -24,6 +26,10 @@ public class ProtoClientMatch(
     public ITypeSymbol? JsonSerializerContext { get; } = jsonSerializerContext;
 
     public string? Path { get; } = path;
+
+    public bool NoHttpClientFactory { get; } = noHttpClientFactory;
+
+    public IReadOnlyList<ProtoClientConstructorParameter> AdditionalConstructorParameters { get; } = additionalConstructorParameters;
 
     public IReadOnlyDictionary<string, string> MethodPaths { get; } = methodPaths;
 }
