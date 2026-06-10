@@ -50,7 +50,7 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
             return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         {{
             var data = request.Query;
-            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(ReadArgument<{e.TypeName}>(data[""{e.Key}""]));
+            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(new {desc.InputDtoTypeName}(ReadArgument<{e.TypeName}>(data[""{e.Key}""])));
         }}";
         }
         if (desc.Parameters.Count > 0)
