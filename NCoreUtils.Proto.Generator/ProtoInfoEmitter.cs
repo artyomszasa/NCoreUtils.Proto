@@ -19,6 +19,7 @@ internal class ProtoInfoEmitter(ProtoServiceInfo info)
         : global::NCoreUtils.Proto.Internal.ProtoMethodInfo
         , {(desc.NoReturn ? $"global::NCoreUtils.Proto.Internal.IProtoMethodVoidReturn<{desc.ReturnType}>" : $"global::NCoreUtils.Proto.Internal.IProtoMethodReturn<{desc.ReturnType}, {desc.ReturnValueType}>")}
         {(desc.InputDtoTypeName is null ? string.Empty : $", global::NCoreUtils.Proto.Internal.IProtoMethodInputDto<{desc.InputDtoTypeName}>")}
+        {(desc.InputDtoTypeName?.IsWrapper == true ? ", global::NCoreUtils.Proto.Internal.IProtoMethodInputDtoIsWrapped" : string.Empty)}
     {{
         public const string MethodName = ""{desc.MethodName}"";
 

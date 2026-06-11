@@ -26,6 +26,12 @@ public partial class MathService : IMath
         return Task.CompletedTask;
     }
 
+    public ValueTask<int> IncValueAsync(int a, CancellationToken cancellationToken)
+        => new(a + 1);
+
+    public ValueTask<int> IncValueWAsync(int a, CancellationToken cancellationToken)
+        => new(a + 1);
+
     public ValueTask<MyData?> OverrideNumAsync(MyData? source, CancellationToken cancellationToken)
         => source is null ? default : new(new MyData(Counter, source.Str));
 }

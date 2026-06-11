@@ -11,7 +11,7 @@ public abstract class TypeName : IEquatable<TypeName>
 #pragma warning restore CS0661
 #pragma warning restore CS0660
 {
-    private sealed class GenerationTimeTypeName(string fullName)
+    private sealed class GenerationTimeTypeName(string fullName, bool isWrapper)
         : TypeName
         , IEquatable<GenerationTimeTypeName>
     {
@@ -25,6 +25,10 @@ public abstract class TypeName : IEquatable<TypeName>
 
         public override string JsonContextName => throw new NotSupportedException();
 
+        public override bool IsWrapper { get; } = isWrapper;
+
+        public override bool IsValueType => false;
+
         public override int GetHashCode()
             => StringComparer.InvariantCulture.GetHashCode(_fullName);
 
@@ -36,11 +40,13 @@ public abstract class TypeName : IEquatable<TypeName>
                 && _fullName == other._fullName;
     }
 
-    private sealed class DefinedTypeName(ITypeSymbol type)
+    private sealed class DefinedTypeName(ITypeSymbol type, bool isWrapper)
         : TypeName
         , IEquatable<DefinedTypeName>
     {
         private bool? _isNullableReference;
+
+        private bool? _isValueType;
 
         private string? _fullname;
 
@@ -48,11 +54,15 @@ public abstract class TypeName : IEquatable<TypeName>
 
         private ITypeSymbol Type { get; } = type;
 
+        public override bool IsWrapper { get; } = isWrapper;
+
         public override bool IsNullableReference => _isNullableReference ??= Type.NullableAnnotation == NullableAnnotation.Annotated;
 
         public override string FullName => _fullname ??= Type.ToFullMaybeNullableName();
 
         public override string JsonContextName => _jsonContextName ??= GetTypeInfoPropertyName(Type);
+
+        public override bool IsValueType => _isValueType ??= Type.IsValueType;
 
         public override int GetHashCode()
             => HashCode.Combine(
@@ -111,17 +121,21 @@ public abstract class TypeName : IEquatable<TypeName>
     public static implicit operator string(TypeName typeName)
         => typeName.FullName;
 
-    public static TypeName Create(ITypeSymbol type)
-        => new DefinedTypeName(type);
+    public static TypeName Create(ITypeSymbol type, bool isWrapper)
+        => new DefinedTypeName(type, isWrapper);
 
-    public static TypeName Create(string fullName)
-        => new GenerationTimeTypeName(fullName);
+    public static TypeName Create(string fullName, bool isWrapper)
+        => new GenerationTimeTypeName(fullName, isWrapper);
 
     public abstract bool IsNullableReference { get; }
+
+    public abstract bool IsValueType { get; }
 
     public abstract string FullName { get; }
 
     public abstract string JsonContextName { get; }
+
+    public abstract bool IsWrapper { get; }
 
     public override string ToString()
         => FullName;

@@ -21,6 +21,8 @@ public class BasicTests : BasicTestsBase<MathStartup>
         Assert.Equal(3, await math.AddVCAsync(1, 2, CancellationToken.None));
         await math.IncAsync(CancellationToken.None);
         await math.IncAsync(CancellationToken.None);
+        Assert.Equal(3, await math.IncValueAsync(2, CancellationToken.None));
+        Assert.Equal(3, await math.IncValueWAsync(2, CancellationToken.None));
         var data = await math.OverrideNumAsync(new MyData(12, "abc"), CancellationToken.None);
         Assert.NotNull(data);
         Assert.Equal(2, data!.Num);

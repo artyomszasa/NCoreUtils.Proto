@@ -89,12 +89,12 @@ internal abstract class ProtoConsumerParser(SemanticModel semanticModel) : Proto
                     },
                     var method => method.ToString()
                 };
-                var inputDtoType = e.AllInterfaces.TryGetFirst(i => i.Name == "IProtoMethodInputDto", out var dto)
-                    ? dto.TypeArguments[0]
-                    : default;
+                var (inputDtoType, isWrapper) = e.AllInterfaces.TryGetFirst(i => i.Name == "IProtoMethodInputDto", out var dto)
+                    ? (dto.TypeArguments[0], e.AllInterfaces.Any(i => i.Name == "IProtoMethodInputDtoIsWrapped"))
+                    : (default, default);
                 return new MethodDescriptor(
                     returnType: returnType.ToFullMaybeNullableName(),
-                    returnValueType: TypeName.Create(returnValueType),
+                    returnValueType: TypeName.Create(returnValueType, isWrapper: false),
                     noReturn: noReturn,
                     asyncReturnType: asyncReturnType,
                     methodName: methodName,
@@ -109,7 +109,7 @@ internal abstract class ProtoConsumerParser(SemanticModel semanticModel) : Proto
                     parameterNaming: parameterNaming,
                     singleJsonParameterWrapping: sjaw,
                     httpMethod: httpMethod,
-                    inputDtoTypeName: inputDtoType is null ? default : TypeName.Create(inputDtoType)
+                    inputDtoTypeName: inputDtoType is null ? default : TypeName.Create(inputDtoType, isWrapper)
                 );
             })
             .ToList();

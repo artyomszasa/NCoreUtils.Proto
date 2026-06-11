@@ -33,12 +33,25 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
 
     private string EmitFormRequestReader(MethodDescriptor desc, ITypeSymbol? implType)
     {
-        return @$"protected virtual async global::System.Threading.Tasks.Task<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        if (true == desc.InputDtoTypeName?.IsWrapper || desc.Parameters.Count > 1)
+        {
+            return @$"protected virtual async global::System.Threading.Tasks.Task<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         {{
             var data = await request.ReadFormAsync(cancellationToken);
             return new {desc.InputDtoTypeName}(
                 {string.Join("," + NewLine + "                ", desc.Parameters.Select(e => $"{EmitReadArgumentMethod(implType, e)}(data[\"{e.Key}\"])"))}
             );
+        }}";
+        }
+        if (desc.Parameters.Count != 1)
+        {
+            throw new InvalidOperationException("Trying to emit reader for method without parameters...");
+        }
+        var p = desc.Parameters[0];
+        return @$"protected virtual async global::System.Threading.Tasks.Task<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        {{
+            var data = await request.ReadFormAsync(cancellationToken);
+            return {EmitReadArgumentMethod(implType, p)}(data[""{p.Key}""]);
         }}";
     }
 
@@ -47,10 +60,18 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
         if (desc.Parameters.Count == 1)
         {
             var e = desc.Parameters[0];
-            return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+            if (true == desc.InputDtoTypeName?.IsWrapper)
+            {
+                return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         {{
             var data = request.Query;
             return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(new {desc.InputDtoTypeName}(ReadArgument<{e.TypeName}>(data[""{e.Key}""])));
+        }}";
+            }
+            return @$"protected virtual global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        {{
+            var data = request.Query;
+            return new global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}>(ReadArgument<{e.TypeName}>(data[""{e.Key}""]));
         }}";
         }
         if (desc.Parameters.Count > 0)
@@ -68,7 +89,8 @@ internal class ProtoImplEmitter(ProtoImplInfo info, ProtoImplEmitterContext cont
 
     private string EmitRequestReader(MethodDescriptor desc, ITypeSymbol? implType) => desc.Input switch
     {
-        ProtoInputType.Json when true == desc.InputDtoTypeName?.IsNullableReference => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
+        ProtoInputType.Json when true == desc.InputDtoTypeName?.IsNullableReference || true == desc.InputDtoTypeName?.IsValueType
+            => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         => await global::System.Text.Json.JsonSerializer.DeserializeAsync(request.Body, {Info.JsonSerializerContextType}.Default.{desc.InputDtoTypeName!.JsonContextName}, cancellationToken);",
         ProtoInputType.Json => @$"protected virtual async global::System.Threading.Tasks.ValueTask<{desc.InputDtoTypeName}> Read{desc.MethodId}RequestAsync(global::Microsoft.AspNetCore.Http.HttpRequest request, global::System.Threading.CancellationToken cancellationToken)
         => (await global::System.Text.Json.JsonSerializer.DeserializeAsync(request.Body, {Info.JsonSerializerContextType}.Default.{desc.InputDtoTypeName!.JsonContextName}, cancellationToken))

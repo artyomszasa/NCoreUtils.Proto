@@ -27,6 +27,10 @@ public interface IMath
 
     ValueTask<int> AddVAsync(int a, int b);
 
+    ValueTask<int> IncValueAsync(int a, CancellationToken cancellationToken);
+
+    ValueTask<int> IncValueWAsync(int a, CancellationToken cancellationToken);
+
     Task IncAsync(CancellationToken cancellationToken);
 
     ValueTask<MyData?> OverrideNumAsync(MyData? source, CancellationToken cancellationToken);

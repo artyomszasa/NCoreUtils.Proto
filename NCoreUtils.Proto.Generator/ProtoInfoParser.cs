@@ -122,7 +122,7 @@ internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semant
 
                 return new MethodDescriptor(
                     returnType: m.ReturnType.ToFullMaybeNullableName(),
-                    returnValueType: TypeName.Create(returnValueType),
+                    returnValueType: TypeName.Create(returnValueType, isWrapper: false),
                     noReturn: noReturn,
                     asyncReturnType: asyncReturnType,
                     methodName: m.Name,
@@ -144,9 +144,9 @@ internal class ProtoInfoParser(SemanticModel semanticModel) : ProtoParser(semant
                     inputDtoTypeName: sjaw switch
                     {
 #pragma warning disable CS0618 // Type or member is obsolete
-                        ProtoSingleJsonParameterWrapping.DoNotWrap when parameters.Count == 1 => TypeName.Create(parameters[0].Type),
+                        ProtoSingleJsonParameterWrapping.DoNotWrap when parameters.Count == 1 => TypeName.Create(parameters[0].Type, isWrapper: false),
 #pragma warning restore CS0618 // Type or member is obsolete
-                        _ => TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args")
+                        _ => TypeName.Create($"Dto{match.Cds.Identifier.ValueText}{methodId}Args", isWrapper: true)
                     }
                 );
             })
