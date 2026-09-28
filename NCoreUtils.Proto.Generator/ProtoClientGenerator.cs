@@ -223,7 +223,7 @@ internal class HandlesResponseDisposalAttribute : System.Attribute
                 ctx.CancellationToken.ThrowIfCancellationRequested();
                 var client = new ProtoClientParser(match.SemanticModel).Parse(match);
                 var code = new ProtoClientEmitter(client).EmitClient(GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated", match.Cds.Identifier.ValueText);
-                ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code, Utf8));
+                ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code.NormalizeWhitespace(eol: "\n").ToFullString(), Utf8));
             }
             catch (Exception exn)
             {

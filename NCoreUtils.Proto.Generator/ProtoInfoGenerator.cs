@@ -297,7 +297,7 @@ internal class ProtoJsonConverterAttribute : System.Attribute
             ctx.CancellationToken.ThrowIfCancellationRequested();
             var info = new ProtoInfoParser(match.SemanticModel).ParseInfo(ctx, match);
             var code = new ProtoInfoEmitter(info).EmitServiceInfo(GetSyntaxNamespace(match.Cds) ?? "NCoreUtils.Proto.Generated", match.Cds.Identifier.ValueText);
-            ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code, Utf8));
+            ctx.AddSource($"{match.Cds.Identifier.ValueText}.g.cs", SourceText.From(code.NormalizeWhitespace(eol: "\n").ToFullString(), Utf8));
         });
     }
 }
