@@ -150,7 +150,7 @@ internal class ProtoServiceAttribute : System.Attribute
                     name,
                     ty
                 );
-            ctx.AddSource($"{rootName}.g.cs", SourceText.From(code, Utf8));
+            ctx.AddSource($"{rootName}.g.cs", SourceText.From(code.NormalizeWhitespace(eol: "\n").ToFullString(), Utf8));
         });
     }
 }
